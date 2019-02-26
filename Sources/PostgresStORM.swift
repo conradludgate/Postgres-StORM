@@ -210,7 +210,57 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// Table Creation
 	/// Requires the connection to be configured, as well as a valid "table" property to have been set in the class
 
-	open func setup(_ str: String = "") throws {
+//  func getType(_ value: Any) -> String {
+//    let mirror = Mirror(reflecting: value)
+//
+//    guard let style = mirror.displayStyle else {
+//      if value is Int {
+//        return "int"
+//      } else if value is Bool {
+//        return "bool"
+//      }else if value is String {
+//        return "text"
+//      } else if value is [String:Any] {
+//        return "jsonb"
+//      } else {
+//        return "text"
+//      }
+//    }
+//
+//    switch style {
+//    case .struct,
+//         .class:
+//      print("class")
+//      var children: [String] = []
+//      for child in mirror.children {
+//        children.append(getType(child.value))
+//      }
+//      return "{\(children.joined(separator: ", "))}"
+//    case .collection:
+//      print("\(mirror.displayStyle!)")
+//      if value is [Int] {
+//        return "int[]"
+//      } else if value is [Bool] {
+//        return "bool[]"
+//      } else if value is [String] {
+//        return "text[]"
+//      } else if value is [[String:Any]] {
+//        return "jsonb[]"
+//      } else {
+//        return "text[]"
+//      }
+//    case .dictionary:
+//      if value is [String:Any] {
+//        return "jsonb"
+//      } else {
+//        return "text"
+//      }
+//    default:
+//      return ""
+//    }
+//  }
+
+  open func setup(_ str: String = "") throws {
 		LogFile.info("Running setup: \(table())", logFile: "./StORMlog.txt")
 		var createStatement = str
 		if str.count == 0 {
@@ -223,6 +273,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 				var verbage = ""
 				if !key.hasPrefix("internal_") && !key.hasPrefix("_") {
 					verbage = "\(key.lowercased()) "
+
 					if child.value is Int && opt.count == 0 {
 						verbage += "serial"
 					} else if child.value is Int {
@@ -231,10 +282,13 @@ open class PostgresStORM: StORM, StORMProtocol {
 						verbage += "bool"
 					} else if child.value is [String:Any] {
 						verbage += "jsonb"
-					// Adding support for arrays
-					} else if child.value is [String] || child.value is [Int] || child.value is [Any] {
-						verbage += "text" // they are stored as comma delimited arrays
-					} else if child.value is Double {
+          } else if child.value is [[String:Any]] {
+            verbage += "jsonb[]"
+          } else if child.value is [String] {
+            verbage += "text[]"
+          } else if child.value is [Int] {
+            verbage += "int[]"
+          } else if child.value is Double {
 						verbage += "float8"
 					} else if child.value is UInt || child.value is UInt8 || child.value is UInt16 || child.value is UInt32 || child.value is UInt64 {
 						verbage += "bytea"

@@ -6,6 +6,7 @@
 //
 //
 
+import Foundation
 import StORM
 import PerfectLogger
 
@@ -66,9 +67,39 @@ extension PostgresStORM {
 
 		var paramString = [String]()
 		var substString = [String]()
-		for i in 0..<params.count {
-			paramString.append(String(describing: params[i]))
-			substString.append("$\(i+1)")
+
+    var i = 1
+		params.forEach { param in
+      if param is [Int] {
+        var arrayVals: [String] = []
+        (param as! [Int]).forEach { int in
+          paramString.append(String(describing: int))
+          arrayVals.append("$\(i)::int")
+          i += 1
+        }
+        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
+      } else if param is [String] {
+        var arrayVals: [String] = []
+        (param as! [String]).forEach { string in
+          paramString.append(string)
+          arrayVals.append("$\(i)")
+          i += 1
+        }
+        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
+      } else if param is [[String:Any]] {
+        var arrayVals: [String] = []
+        let encoder = JSONEncoder()
+        (param as! [[String:Any]]).forEach { json in
+          paramString.append(String(data: try! encoder.encode(json)))
+          arrayVals.append("$\(i)::json")
+          i += 1
+        }
+        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
+      } else {
+        paramString.append(String(describing: param))
+        substString.append("$\(i)")
+        i += 1
+      }
 		}
 
 		//"\"" + columns.joined(separator: "\",\"") + "\""
