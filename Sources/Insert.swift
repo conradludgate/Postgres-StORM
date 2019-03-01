@@ -65,42 +65,48 @@ extension PostgresStORM {
 	/// Insert function where the suppled data is in matching arrays of columns and parameter values, as well as specifying the name of the id column.
 	public func insert(cols: [String], params: [Any], idcolumn: String) throws -> Any {
 
-		var paramString = [String]()
-		var substString = [String]()
+    var paramString = [String]()
+    var substString = [String]()
 
     var i = 1
-		params.forEach { param in
-      if param is [Int] {
+    params.forEach { param in
+      if param is [String:Any] {
+
+        let jsonData = try? JSONSerialization.data(withJSONObject: param, options: [])
+
+        paramString.append(String(data: jsonData!, encoding: .utf8)!)
+        substString.append("$\(i)::jsonb")
+        i += 1
+      } else if param is [[String:Any]] {
         var arrayVals: [String] = []
-        (param as! [Int]).forEach { int in
-          paramString.append(String(describing: int))
-          arrayVals.append("$\(i)::int")
+
+        (param as! [[String:Any]]).forEach { json in
+
+          let jsonData = try? JSONSerialization.data(withJSONObject: json, options: [])
+
+          paramString.append(String(data: jsonData!, encoding: .utf8)!)
+          arrayVals.append("$\(i)::jsonb")
           i += 1
         }
+
         substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
-      } else if param is [String] {
+
+      } else if param is [Any] {
         var arrayVals: [String] = []
-        (param as! [String]).forEach { string in
-          paramString.append(string)
+
+        (param as! [Any]).forEach { elem in
+          paramString.append(String(describing: elem))
           arrayVals.append("$\(i)")
           i += 1
         }
-        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
-      } else if param is [[String:Any]] {
-        var arrayVals: [String] = []
-        let encoder = JSONEncoder()
-        (param as! [[String:Any]]).forEach { json in
-          paramString.append(String(data: try! encoder.encode(json)))
-          arrayVals.append("$\(i)::json")
-          i += 1
-        }
+
         substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
       } else {
         paramString.append(String(describing: param))
         substString.append("$\(i)")
         i += 1
       }
-		}
+    }
 
 		//"\"" + columns.joined(separator: "\",\"") + "\""
 
