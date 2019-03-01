@@ -127,7 +127,6 @@ extension PostgresStORM {
 			// SELECT ASSEMBLE
 			var str = "SELECT \(clauseSelectList.lowercased()) FROM \(table()) \(clauseWhere) \(clauseOrder)"
 
-
 			// TODO: Add joins, having, groupby
 
 			if cursor.limit > 0 {

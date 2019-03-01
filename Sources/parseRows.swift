@@ -12,6 +12,7 @@ import PerfectLib
 //import PerfectXML
 import Foundation
 
+
 /// Supplies the parseRows method extending the main class.
 extension PostgresStORM {
 	
@@ -26,31 +27,72 @@ extension PostgresStORM {
 
 			for f in 0..<result.numFields() {
 
+//        print(result.fieldType(index: f)!)
+//        print(PostgresMap(Int(result.fieldType(index: f)!)))
+
 				switch PostgresMap(Int(result.fieldType(index: f)!)) {
 				case "Int":
 					params[result.fieldName(index: f)!] = result.getFieldInt(tupleIndex: x, fieldIndex: f)
+        case "Int[]":
+          params[result.fieldName(index: f)!] = result.getFieldString(tupleIndex: x, fieldIndex: f).map{ toArrayInt($0) }
 				case "Bool":
 					params[result.fieldName(index: f)!] = result.getFieldBool(tupleIndex: x, fieldIndex: f)
 				case "String":
 					params[result.fieldName(index: f)!] = result.getFieldString(tupleIndex: x, fieldIndex: f)
+        case "String[]":
+          params[result.fieldName(index: f)!] = result.getFieldString(tupleIndex: x, fieldIndex: f).map{ toArrayString($0) }
 				case "json":
 					let output = result.getFieldString(tupleIndex: x, fieldIndex: f)
 					do {
-                        let decode = try output?.jsonDecode()
-                        // Here we are first trying to cast into the traditional json return.  However, when using the json_agg function, it will return an array.  The following considers both cases.
-                        params[result.fieldName(index: f)!] = decode as? [String:Any] ?? decode as? [[String:Any]]
+            let decode = try output?.jsonDecode()
+            // Here we are first trying to cast into the traditional json return.  However, when using the json_agg function, it will return an array.  The following considers both cases.
+            params[result.fieldName(index: f)!] = decode as? [String:Any] ?? decode as? [[String:Any]]
 					} catch {
 						params[result.fieldName(index: f)!] = [String:Any]()
 					}
 				case "jsonb":
 					let output = result.getFieldString(tupleIndex: x, fieldIndex: f)
 					do {
-                        let decode = try output?.jsonDecode()
-                        // Here we are first trying to cast into the traditional json return.  However, when using the jsonb_agg function, it will return an array.  The following considers both cases.
-						params[result.fieldName(index: f)!] = decode as? [String:Any] ?? decode as? [[String:Any]]
+            let decode = try output?.jsonDecode()
+            // Here we are first trying to cast into the traditional json return.  However, when using the jsonb_agg function, it will return an array.  The following considers both cases.
+            params[result.fieldName(index: f)!] = decode as? [String:Any] ?? decode as? [[String:Any]]
 					} catch {
 						params[result.fieldName(index: f)!] = [String:Any]()
 					}
+        case "json[]":
+          let output = result.getFieldString(tupleIndex: x, fieldIndex: f)
+          do {
+            let decode = try output?.jsonDecode()
+            // Here we are first trying to cast into the traditional json return.  However, when using the jsonb_agg function, it will return an array.  The following considers both cases.
+            params[result.fieldName(index: f)!] = decode as? [[String:Any]]
+          } catch {
+            params[result.fieldName(index: f)!] = [[String:Any]]()
+          }
+        case "jsonb[]":
+          let output = result.getFieldString(tupleIndex: x, fieldIndex: f).map{ (string) -> [[String:Any]] in
+            var text = string
+            if text.count < 4 {
+              return []
+            }
+
+            text.removeFirst(2)
+            text.removeLast(2)
+            text = text.replacingOccurrences(of: "\",\"", with: ",")
+            text = text.replacingOccurrences(of: "\\\"", with: "\"")
+            text = "[\(text)]"
+            do {
+              let decode = try text.jsonDecode()
+              print(decode)
+              return decode as? [[String:Any]] ?? []
+            } catch {
+              return []
+            }
+          }
+
+          print(output!)
+
+          params[result.fieldName(index: f)!] = output
+
 //				case "xml":
 //					// will create an XML object
 //					params[result.fieldName(index: f)!] = XDocument(fromSource: result.getFieldString(tupleIndex: x, fieldIndex: f)!)

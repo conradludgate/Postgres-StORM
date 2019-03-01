@@ -15,10 +15,24 @@ extension PostgresStORM {
 	}
 
 	public func toArrayString(_ input: Any) -> [String] {
-		return (input as? String ?? "").split(separator: ",").map{ trim(String($0)) }
+    var text = (input as? String ?? "{}")
+    if text.count < 2 {
+      return []
+    }
+
+    text.removeFirst()
+    text.removeLast()
+		return text.split(separator: ",").map{ trim(String($0)) }
 	}
 	public func toArrayInt(_ input: Any) -> [Int] {
-		// Needs refinement. Should not be 0
-		return (input as? String ?? "").split(separator: ",").map{ Int(trim(String($0))) ?? 0 }
+    var text = (input as? String ?? "{}")
+    if text.count < 2 {
+      return []
+    }
+
+    text.removeFirst()
+    text.removeLast()
+
+    return text.split(separator: ",").map{ trim(String($0)).toInt() ?? 0 }
 	}
 }

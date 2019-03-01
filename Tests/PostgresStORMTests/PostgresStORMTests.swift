@@ -11,8 +11,10 @@ class User: PostgresStORM {
 	var firstname		: String = ""
 	var lastname		: String = ""
 	var email			: String = ""
-	var stringarray		= [String]()
-
+  var stringarray: [String] = []
+  var intarray: [Int] = []
+  var json: [String:Any] = [:]
+  var jsonarray: [[String:Any]] = []
 
 	override open func table() -> String {
 		return "users_test1"
@@ -23,7 +25,10 @@ class User: PostgresStORM {
 		firstname		= this.data["firstname"] as? String ?? ""
 		lastname		= this.data["lastname"] as? String ?? ""
 		email			= this.data["email"] as? String ?? ""
-		stringarray		= toArrayString(this.data["stringarray"] as? String ?? "")
+		stringarray		= this.data["stringarray"] as? [String] ?? []
+    json = this.data["json"] as? [String:Any] ?? [:]
+    jsonarray = this.data["jsonarray"] as? [[String:Any]] ?? []
+    intarray = this.data["intarray"] as? [Int] ?? []
 	}
 
 	func rows() -> [User] {
@@ -357,7 +362,7 @@ class PostgresStORMTests: XCTestCase {
 	/* =============================================================================================
 	Test array set & retrieve
 	============================================================================================= */
-	func testArray() {
+	func testStringArray() {
 		let obj = User()
 		obj.stringarray = ["a", "b", "zee"]
 
@@ -371,14 +376,87 @@ class PostgresStORMTests: XCTestCase {
 
 		do {
 			try obj2.get(obj.id)
-			try obj.delete()
-			try obj2.delete()
+      try obj.delete()
+      try obj2.delete()
 		} catch {
 			XCTFail(String(describing: error))
 		}
 		XCTAssert(obj.id == obj2.id, "Object not the same (id)")
 		XCTAssert(obj.stringarray == obj2.stringarray, "Object not the same (stringarray)")
 	}
+
+  func testIntArray() {
+    let obj = User()
+    obj.intarray = [3, 1, 2]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert(obj.intarray == obj2.intarray, "Object not the same (intarray)")
+  }
+
+  func testJson() {
+    let obj = User()
+    obj.json = ["a": "b", "c": "zee"]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert(String(describing: obj.json) == String(describing: obj2.json), "Object not the same (json)")
+  }
+
+  func testJsonArray() {
+    let obj = User()
+    obj.jsonarray = [["a": "b", "c": "zee"], ["foo": "bar", "one": "two"]]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.jsonarray)
+    print(obj2.jsonarray)
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    print(type(of: obj.jsonarray[0]["a"]!))
+    print(type(of: obj2.jsonarray[0]["a"]!))
+    XCTAssert(String(describing: obj.jsonarray) == String(describing: obj2.jsonarray), "Object not the same (jsonarray)")
+  }
 	
     /* =============================================================================================
      parseRows (JSON Aggregation)
@@ -427,7 +505,10 @@ class PostgresStORMTests: XCTestCase {
 			("testCheckDeleteSQL", testCheckDeleteSQL),
 			("testFind", testFind),
 			("testFindAll", testFindAll),
-			("testArray", testArray),
+			("testArray", testStringArray),
+      ("testJson", testJson),
+      ("testJsonArray", testJsonArray),
+      ("testIntArray", testIntArray),
             ("testJsonAggregation", testJsonAggregation)
 		]
 	}

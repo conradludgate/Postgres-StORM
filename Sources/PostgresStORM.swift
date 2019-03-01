@@ -9,6 +9,7 @@
 import StORM
 import PerfectPostgreSQL
 import PerfectLogger
+import Foundation
 
 /// PostgresConnector sets the connection parameters for the PostgreSQL Server access
 /// Usage:
@@ -74,14 +75,38 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
-		if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
 		if isError() {
+      if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
 		thisConnection.server.close()
 		return result
 	}
+
+  override open func modifyValue(_ v: Any, forKey k: String) -> Any {
+    if v is [String:Any] {
+
+      let jsonData = try? JSONSerialization.data(withJSONObject: v, options: [])
+
+      return String(data: jsonData!, encoding: .utf8)!
+    } else if v is [[String:Any]] {
+      let arrayVals: [String] = (v as! [[String:Any]]).map {
+        let jsonData = try? JSONSerialization.data(withJSONObject: $0, options: [])
+
+        return "\(String(data: jsonData!, encoding: .utf8)!)::jsonb"
+      }
+
+      return "ARRAY[\(arrayVals.joined(separator: ","))]"
+
+    } else if v is [Any] {
+      let arrayVals: [String] = (v as! [Any]).map {"\(String(describing: $0))"}
+
+      return "ARRAY[\(arrayVals.joined(separator: ","))]"
+    } else {
+      return String(describing: v)
+    }
+  }
 
 	// Internal function which executes statements, with parameter binding
 	// Returns a processed row set
@@ -104,16 +129,19 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 		printDebug(statement, params)
 		let result = thisConnection.server.exec(statement: statement, params: params)
+//    LogFile.debug("\(result)", logFile: "./StORMlog.txt")
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
-		if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
 		if isError() {
+      if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
 
 		let resultRows = parseRows(result)
+
+    LogFile.debug("Response: \(resultRows.map{ "\($0.data)" }.joined(separator: ","))", logFile: "./StORMlog.txt")
 		//		result.clear()
 		thisConnection.server.close()
 		return resultRows
@@ -175,7 +203,9 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// On error can throw a StORMError error.
 
 	open func save(set: (_ id: Any)->Void) throws {
-		do {
+    LogFile.debug("\(keyIsEmpty())", logFile: "./StORMlog.txt")
+
+    do {
 			if keyIsEmpty() {
 				let setId = try insert(asData(1))
 				set(setId)
@@ -280,19 +310,19 @@ open class PostgresStORM: StORM, StORMProtocol {
 						verbage += "int8"
 					} else if child.value is Bool {
 						verbage += "bool"
-					} else if child.value is [String:Any] {
-						verbage += "jsonb"
-          } else if child.value is [[String:Any]] {
-            verbage += "jsonb[]"
-          } else if child.value is [String] {
+          } else if type(of: child.value).self == [String].self {
             verbage += "text[]"
-          } else if child.value is [Int] {
+          } else if type(of: child.value).self == [[String:Any]].self {
+            verbage += "jsonb[]"
+          } else if type(of: child.value).self == [Int].self {
             verbage += "int[]"
           } else if child.value is Double {
 						verbage += "float8"
 					} else if child.value is UInt || child.value is UInt8 || child.value is UInt16 || child.value is UInt32 || child.value is UInt64 {
 						verbage += "bytea"
-					} else {
+          } else if child.value is [String:Any] {
+            verbage += "jsonb"
+          } else {
 						verbage += "text"
 					}
 					if opt.count == 0 {
@@ -315,7 +345,6 @@ open class PostgresStORM: StORM, StORMProtocol {
 			throw StORMError.error("\(error)")
 		}
 	}
-
 }
 
 

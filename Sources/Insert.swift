@@ -18,10 +18,10 @@ extension PostgresStORM {
 	public func insert(_ data: [(String, Any)]) throws -> Any {
 
 		var keys = [String]()
-		var vals = [String]()
+		var vals = [Any]()
 		for i in data {
 			keys.append(i.0)
-			vals.append(String(describing: i.1))
+			vals.append(i.1)
 		}
 		do {
 			return try insert(cols: keys, params: vals)
@@ -70,14 +70,16 @@ extension PostgresStORM {
 
     var i = 1
     params.forEach { param in
-      if param is [String:Any] {
+//      LogFile.info("\(type(of: param).self) = \(param)", logFile: "./StORMlog.txt")
+
+      if type(of: param).self == [String:Any].self {
 
         let jsonData = try? JSONSerialization.data(withJSONObject: param, options: [])
 
         paramString.append(String(data: jsonData!, encoding: .utf8)!)
         substString.append("$\(i)::jsonb")
         i += 1
-      } else if param is [[String:Any]] {
+      } else if type(of: param).self == [[String:Any]].self {
         var arrayVals: [String] = []
 
         (param as! [[String:Any]]).forEach { json in
@@ -89,7 +91,7 @@ extension PostgresStORM {
           i += 1
         }
 
-        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
+        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
 
       } else if param is [Any] {
         var arrayVals: [String] = []
@@ -100,7 +102,16 @@ extension PostgresStORM {
           i += 1
         }
 
-        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]")
+        let type: String
+        if type(of: param).self == [String].self {
+          type = "text[]"
+        } else if type(of: param).self == [Int].self {
+          type = "int[]"
+        } else {
+          type = "text[]"
+        }
+
+        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::\(type)")
       } else {
         paramString.append(String(describing: param))
         substString.append("$\(i)")

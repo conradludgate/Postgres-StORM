@@ -21,12 +21,15 @@ public func PostgresMap(_ i: Int) -> String {
 	//case 142: return "xml"
 	case 700: return "float"
 	case 701: return "float"
+  case 1007: return "Int[]"
+  case 1009: return "String[]"
 	case 1043: return "String"
 	case 1082: return "date"
 	case 1083: return "time"
 	case 1114: return "timestamp"
 	case 1184: return "timestampz"
 	case 3802: return "jsonb"
+  case 3807: return "jsonb[]"
 
 	default: return "Invalid"
 	}

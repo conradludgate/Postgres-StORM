@@ -6,7 +6,8 @@ let package = Package(
 	targets: [],
 	dependencies: [
 		.Package(url: "https://github.com/PerfectlySoft/Perfect-PostgreSQL.git", majorVersion: 3),
-		.Package(url: "https://github.com/SwiftORM/StORM.git", majorVersion: 3),
+    .Package(url: "https://github.com/conradludgate/StORM.git", majorVersion: 3),
+//    .Package(url: "../StORM", majorVersion: 3),
 //		.Package(url: "https://github.com/PerfectlySoft/Perfect-XML.git", majorVersion: 3),
 		.Package(url: "https://github.com/PerfectlySoft/Perfect-Logger.git", majorVersion: 3),
 	]
