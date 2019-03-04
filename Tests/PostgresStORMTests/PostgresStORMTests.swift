@@ -4,6 +4,10 @@ import Foundation
 import StORM
 @testable import PostgresStORM
 
+struct Data: Equatable, Codable {
+  let foo: String
+  let bar: Int
+}
 
 class User: PostgresStORM {
 	// NOTE: First param in class should be the ID.
@@ -13,15 +17,19 @@ class User: PostgresStORM {
 	var email			: String = ""
   var stringarray: [String] = []
   var intarray: [Int] = []
-  var json: [String:Any] = [:]
+  var json: [String:Any]?
   var jsonarray: [[String:Any]] = []
+  var struct_: Data?
+  var structarray: [Data] = []
 
 	override open func table() -> String {
 		return "users_test1"
 	}
 
 	override func to(_ this: StORMRow) {
-		id				= this.data["id"] as? Int ?? 0
+    let decoder = JSONDecoder()
+
+    id				= this.data["id"] as? Int ?? 0
 		firstname		= this.data["firstname"] as? String ?? ""
 		lastname		= this.data["lastname"] as? String ?? ""
 		email			= this.data["email"] as? String ?? ""
@@ -29,6 +37,8 @@ class User: PostgresStORM {
     json = this.data["json"] as? [String:Any] ?? [:]
     jsonarray = this.data["jsonarray"] as? [[String:Any]] ?? []
     intarray = this.data["intarray"] as? [Int] ?? []
+    struct_ = Data.fromJson(this.data["struct_"], using: decoder) ?? Data(foo: "", bar: 0)
+    structarray = Data.fromJsonArray(this.data["structarray"], using: decoder)
 	}
 
 	func rows() -> [User] {
@@ -428,7 +438,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    XCTAssert(String(describing: obj.json) == String(describing: obj2.json), "Object not the same (json)")
+    XCTAssert((obj.json! as NSDictionary).isEqual(obj2.json ?? [:]), "Object not the same (json)")
   }
 
   func testJsonArray() {
@@ -450,14 +460,58 @@ class PostgresStORMTests: XCTestCase {
     } catch {
       XCTFail(String(describing: error))
     }
-    print(obj.jsonarray)
-    print(obj2.jsonarray)
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    print(type(of: obj.jsonarray[0]["a"]!))
-    print(type(of: obj2.jsonarray[0]["a"]!))
-    XCTAssert(String(describing: obj.jsonarray) == String(describing: obj2.jsonarray), "Object not the same (jsonarray)")
+    XCTAssert(obj.jsonarray.elementsEqual(obj2.jsonarray, by: { ($0 as NSDictionary).isEqual(to: $1) } ), "Object not the same (jsonarray)")
   }
-	
+
+  func testStructArray() {
+    let obj = User()
+    obj.structarray = [Data(foo: "Hello", bar: 1), Data(foo: "World", bar: 4)]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert(obj.structarray.elementsEqual(obj2.structarray), "Object not the same (structarray)")
+  }
+
+  func testStruct() {
+    let obj = User()
+    obj.struct_ = Data(foo: "Hello", bar: 1)
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.struct_)
+    print(obj2.struct_)
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert(obj.struct_ == obj2.struct_, "Object not the same (struct)")
+  }
+
     /* =============================================================================================
      parseRows (JSON Aggregation)
      ============================================================================================= */
@@ -508,8 +562,10 @@ class PostgresStORMTests: XCTestCase {
 			("testArray", testStringArray),
       ("testJson", testJson),
       ("testJsonArray", testJsonArray),
+      ("testStructArray", testStructArray),
+      ("testStruct", testStruct),
       ("testIntArray", testIntArray),
-            ("testJsonAggregation", testJsonAggregation)
+      ("testJsonAggregation", testJsonAggregation)
 		]
 	}
 

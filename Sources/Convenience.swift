@@ -9,6 +9,31 @@
 
 import StORM
 import PerfectLogger
+import Foundation
+
+extension Encodable {
+  func data(using encoder: JSONEncoder = JSONEncoder()) throws -> Data {
+    return try encoder.encode(self)
+  }
+
+  func string(using encoder: JSONEncoder = JSONEncoder()) throws -> String {
+    return try String(data: encoder.encode(self), encoding: .utf8)!
+  }
+}
+
+extension Decodable {
+  static func fromJson(_ json: Any?, using decoder: JSONDecoder = JSONDecoder()) -> Self? {
+    guard let jsonString = try? (json as? [String:Any] ?? [:]).jsonEncodedString() else {
+      return nil
+    }
+    let jsonData = jsonString.data(using: .utf8)!
+    return try? decoder.decode(Self.self, from: jsonData)
+  }
+
+  static func fromJsonArray(_ jsonarray: Any?, using decoder: JSONDecoder = JSONDecoder()) -> [Self] {
+    return (jsonarray  as? [[String:Any]] ?? []).compactMap { Self.fromJson($0, using: decoder) }
+  }
+}
 
 /// Convenience methods extending the main class.
 extension PostgresStORM {
@@ -60,7 +85,7 @@ extension PostgresStORM {
 		}
 	}
 
-	/// Performs a find on mathing column name/value pairs.
+	/// Performs a find on matching column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find([("username","joe")])` will find all rows that have a username equal to "joe"
 	public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor()) throws {

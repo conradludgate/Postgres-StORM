@@ -31,6 +31,9 @@ public struct PostgresConnector {
 
 }
 
+protocol CodableArray {}
+extension Array : CodableArray where Element: Codable {}
+
 /// SuperClass that inherits from the foundation "StORM" class.
 /// Provides PosgreSQL-specific ORM functionality to child classes
 open class PostgresStORM: StORM, StORMProtocol {
@@ -85,27 +88,28 @@ open class PostgresStORM: StORM, StORMProtocol {
 	}
 
   override open func modifyValue(_ v: Any, forKey k: String) -> Any {
-    if v is [String:Any] {
-
-      let jsonData = try? JSONSerialization.data(withJSONObject: v, options: [])
-
-      return String(data: jsonData!, encoding: .utf8)!
-    } else if v is [[String:Any]] {
-      let arrayVals: [String] = (v as! [[String:Any]]).map {
-        let jsonData = try? JSONSerialization.data(withJSONObject: $0, options: [])
-
-        return "\(String(data: jsonData!, encoding: .utf8)!)::jsonb"
-      }
-
-      return "ARRAY[\(arrayVals.joined(separator: ","))]"
-
-    } else if v is [Any] {
-      let arrayVals: [String] = (v as! [Any]).map {"\(String(describing: $0))"}
-
-      return "ARRAY[\(arrayVals.joined(separator: ","))]"
-    } else {
-      return String(describing: v)
-    }
+//    if v is [String:Any] {
+//
+//      let jsonData = try? JSONSerialization.data(withJSONObject: v, options: [])
+//
+//      return String(data: jsonData!, encoding: .utf8)!
+//    } else if v is [[String:Any]] {
+//      let arrayVals: [String] = (v as! [[String:Any]]).map {
+//        let jsonData = try? JSONSerialization.data(withJSONObject: $0, options: [])
+//
+//        return "\(String(data: jsonData!, encoding: .utf8)!)::jsonb"
+//      }
+//
+//      return "ARRAY[\(arrayVals.joined(separator: ","))]"
+//
+//    } else if v is [Any] {
+//      let arrayVals: [String] = (v as! [Any]).map {"\(String(describing: $0))"}
+//
+//      return "ARRAY[\(arrayVals.joined(separator: ","))]"
+//    } else {
+//      return String(describing: v)
+//    }
+    return v
   }
 
 	// Internal function which executes statements, with parameter binding
@@ -304,23 +308,32 @@ open class PostgresStORM: StORM, StORMProtocol {
 				if !key.hasPrefix("internal_") && !key.hasPrefix("_") {
 					verbage = "\(key.lowercased()) "
 
-					if child.value is Int && opt.count == 0 {
+          let t = type(of: child.value).self
+
+					if t == Int.self && opt.count == 0 {
 						verbage += "serial"
-					} else if child.value is Int {
+					} else if t == Int.self || t == Int?.self {
 						verbage += "int8"
-					} else if child.value is Bool {
+					} else if t == Bool.self || t == Bool?.self {
 						verbage += "bool"
-          } else if type(of: child.value).self == [String].self {
-            verbage += "text[]"
-          } else if type(of: child.value).self == [[String:Any]].self {
+          } else if t == [String].self {
+            verbage += "text[]";
+          } else if t == [[String:Any]].self {
             verbage += "jsonb[]"
-          } else if type(of: child.value).self == [Int].self {
+          } else if t == [Int].self {
             verbage += "int[]"
-          } else if child.value is Double {
+          } else if t == Double.self || t == Double?.self {
 						verbage += "float8"
-					} else if child.value is UInt || child.value is UInt8 || child.value is UInt16 || child.value is UInt32 || child.value is UInt64 {
+					} else if t == UInt.self || t == UInt8.self || t == UInt16.self || t == UInt32.self || t == UInt64.self ||
+              t == UInt?.self || t == UInt8?.self || t == UInt16?.self || t == UInt32?.self || t == UInt64?.self{
 						verbage += "bytea"
-          } else if child.value is [String:Any] {
+          } else if t == [String:Any].self || t == [String:Any]?.self {
+            verbage += "jsonb"
+          } else if t == String.self || t == String?.self {
+            verbage += "text"
+          } else if t is CodableArray.Type {
+            verbage += "jsonb[]"
+          } else if t is Codable.Type {
             verbage += "jsonb"
           } else {
 						verbage += "text"

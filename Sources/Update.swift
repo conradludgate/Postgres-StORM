@@ -23,58 +23,185 @@ extension PostgresStORM {
 
     var i = 1
     params.enumerated().forEach { (index, param) in
-//      LogFile.info("\(index): \(type(of: param).self) = \(param)", logFile: "./StORMlog.txt")
+//      LogFile.info("\(cols[index].lowercased()): \(type(of: param).self) = \(param)", logFile: "./StORMlog.txt")
 
-      if type(of: param).self == [String:Any].self {
+      let t = type(of: param)
 
-        let jsonData = try? JSONSerialization.data(withJSONObject: param, options: [])
+      if t.self == [String:Any].self || t.self == [String:Any]?.self {
 
-        paramString.append(String(data: jsonData!, encoding: .utf8)!)
+        let jsonData = try? (param as? [String:Any] ?? [:]).jsonEncodedString()
+
+        paramString.append(jsonData!)
         substString.append("\"\(cols[index].lowercased())\" = $\(i)::jsonb")
         i += 1
-      } else if type(of: param).self == [[String:Any]].self {
+
+      } else if t.self == [[String:Any]].self {
         var arrayVals: [String] = []
 
         (param as! [[String:Any]]).forEach { json in
+          let jsonData = try? json.jsonEncodedString()
 
-          let jsonData = try? JSONSerialization.data(withJSONObject: json, options: [])
-
-          paramString.append(String(data: jsonData!, encoding: .utf8)!)
+          paramString.append(jsonData!)
           arrayVals.append("$\(i)::jsonb")
           i += 1
         }
 
         substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
 
-      } else if param is [Any] {
+      } else if let array = param as? [Any] {
         var arrayVals: [String] = []
 
-        (param as! [Any]).forEach { elem in
+        let type: String
+        if t.self == [String].self {
+          type = "text[]"
+        } else if t.self == [Int].self {
+          type = "int[]"
+        } else if t.self is EncodableArray.Type {
+
+          let encodablearray = array as! [Encodable]
+
+          guard encodablearray.count > 0 else {
+            substString.append("\"\(cols[index].lowercased())\" = ARRAY[]::jsonb[]")
+            return
+          }
+
+          let encoder = JSONEncoder()
+          encodablearray.forEach { encodable in
+
+            paramString.append((try? encodable.string(using: encoder)) ?? "{}")
+            arrayVals.append("$\(i)::jsonb")
+            i += 1
+          }
+
+          substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
+          return
+        } else if t.self == [[String:Any]].self {
+
+          let jsonarray = array as! [[String:Any]]
+
+          guard jsonarray.count > 0 else {
+            substString.append("\"\(cols[index].lowercased())\" = ARRAY[]::jsonb[]")
+            return
+          }
+
+          jsonarray.forEach { json in
+
+            paramString.append((try? json.jsonEncodedString()) ?? "{}")
+            arrayVals.append("$\(i)::jsonb")
+            i += 1
+          }
+
+          substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
+          return
+        } else {
+          type = "text[]"
+        }
+
+        array.forEach { elem in
           paramString.append(String(describing: elem))
           arrayVals.append("$\(i)")
           i += 1
         }
 
-        let type: String
-        if type(of: param).self == [String].self {
-          type = "text[]"
-        } else if type(of: param).self == [Int].self {
-          type = "int[]"
-        } else {
-          type = "text[]"
-        }
-
         substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::\(type)")
+      } else if t.self == String.self || t.self == String?.self {
+        paramString.append((param as? String) ?? "")
+        substString.append("\"\(cols[index].lowercased())\" = $\(i)::text")
+        i += 1
+
+      } else if t.self == Int.self || t.self == Int?.self {
+        paramString.append((param as? Int).map{ String(describing: $0) } ?? "")
+        substString.append("\"\(cols[index].lowercased())\" = $\(i)::int")
+        i += 1
+
+      } else if t.self is Encodable.Type || t.self is OptionalEncodable.Type {
+        paramString.append((param as? Encodable).map { (try? $0.string()) ?? "{}" } ?? "{}")
+        substString.append("\"\(cols[index].lowercased())\" = $\(i)::jsonb")
+        i += 1
       } else {
         paramString.append(String(describing: param))
         substString.append("\"\(cols[index].lowercased())\" = $\(i)")
         i += 1
       }
     }
+//
+//
+//      if type(of: param).self == [String:Any].self {
+//
+//        let jsonData = try? JSONSerialization.data(withJSONObject: param, options: [])
+//
+//        paramString.append(String(data: jsonData!, encoding: .utf8)!)
+//        substString.append("\"\(cols[index].lowercased())\" = $\(i)::jsonb")
+//        i += 1
+//
+////        print("json: \"\(cols[index].lowercased())\" = $\(i)::jsonb")
+//      } else if type(of: param).self == [[String:Any]].self {
+//        var arrayVals: [String] = []
+//
+//        (param as! [[String:Any]]).forEach { json in
+//
+//          let jsonData = try? JSONSerialization.data(withJSONObject: json, options: [])
+//
+//          paramString.append(String(data: jsonData!, encoding: .utf8)!)
+//          arrayVals.append("$\(i)::jsonb")
+//          i += 1
+//        }
+//
+//        substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
+//
+//      } else if let array = param as? [Any] {
+//        var arrayVals: [String] = []
+//
+//        print(t.self)
+//        print([Codable.Type].self)
+//        let type: String
+//        if t.self == [String].self {
+//          type = "text[]"
+//        } else if t.self == [Int].self {
+//          type = "int[]"
+//        } else if let jsonarray = array as? [Encodable] {
+//          print(t)
+//
+//          guard jsonarray.count > 0 else {
+//            substString.append("ARRAY[]::jsonb[]")
+//            return
+//          }
+//
+//          let encoder = JSONEncoder()
+//          jsonarray.forEach { json in
+//            print(json)
+//
+//            paramString.append((try? json.string(using: encoder)) ?? "{}")
+//            arrayVals.append("$\(i)::jsonb")
+//            i += 1
+//          }
+//
+//          substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
+//          return
+//        } else {
+//          type = "text[]"
+//        }
+//
+//        param.forEach { elem in
+//          paramString.append(String(describing: elem))
+//          arrayVals.append("$\(i)")
+//          i += 1
+//        }
+//
+//        substString.append("\"\(cols[index].lowercased())\" = ARRAY[\(arrayVals.joined(separator: ","))]::\(type)")
+//      } else {
+//        paramString.append(String(describing: param))
+//        substString.append("\"\(cols[index].lowercased())\" = $\(i)")
+//        i += 1
+//      }
+//    }
 
     paramString.append(String(describing: idValue))
 
-		let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i)"
+    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i)"
+
+    LogFile.debug("Params: \(paramString.joined(separator: ", "))", logFile: "./StORMlog.txt")
+    LogFile.debug("Substs: \(substString.joined(separator: ", "))", logFile: "./StORMlog.txt")
 
 		do {
 			try exec(str, params: paramString)
