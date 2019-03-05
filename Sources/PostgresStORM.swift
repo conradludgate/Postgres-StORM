@@ -237,7 +237,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 	/// Table Creation (alias for setup)
 
-  public class func determineType(_ t: Any.Type, at: Int = 1) -> String {
+  public static func determineType(_ t: Any.Type, at: Int = 1) -> String {
     if t == Int.self && at == 0 {
       return "serial"
     } else if t == Int.self || t == Int?.self {
@@ -268,7 +268,7 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  open class func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
+  public static func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
     let t = type(of: v).self
     let type = determineType(t)
 
