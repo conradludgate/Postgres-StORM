@@ -12,17 +12,17 @@ import PerfectLogger
 import Foundation
 
 extension Encodable {
-  func data(using encoder: JSONEncoder = JSONEncoder()) throws -> Data {
+  public func data(using encoder: JSONEncoder = JSONEncoder()) throws -> Data {
     return try encoder.encode(self)
   }
 
-  func string(using encoder: JSONEncoder = JSONEncoder()) throws -> String {
+  public func string(using encoder: JSONEncoder = JSONEncoder()) throws -> String {
     return try String(data: encoder.encode(self), encoding: .utf8)!
   }
 }
 
 extension Decodable {
-  static func fromJson(_ json: Any?, using decoder: JSONDecoder = JSONDecoder()) -> Self? {
+  public static func fromJson(_ json: Any?, using decoder: JSONDecoder = JSONDecoder()) -> Self? {
     guard let jsonString = try? (json as? [String:Any] ?? [:]).jsonEncodedString() else {
       return nil
     }
@@ -30,7 +30,7 @@ extension Decodable {
     return try? decoder.decode(Self.self, from: jsonData)
   }
 
-  static func fromJsonArray(_ jsonarray: Any?, using decoder: JSONDecoder = JSONDecoder()) -> [Self] {
+  public static func fromJsonArray(_ jsonarray: Any?, using decoder: JSONDecoder = JSONDecoder()) -> [Self] {
     return (jsonarray  as? [[String:Any]] ?? []).compactMap { Self.fromJson($0, using: decoder) }
   }
 }
@@ -155,7 +155,7 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key.lowercased()) IN (select(unnest(\(subst)))")
+        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
       } else {
         set.append("\(key.lowercased()) = \(subst)")
       }

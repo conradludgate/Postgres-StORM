@@ -76,7 +76,11 @@ extension PostgresStORM {
       let (params, subst) = PostgresStORM.convertInto(param, &i)
       print(param, params, subst)
       paramString += params
-      substString.append("\"\(cols[index].lowercased())\" = array_cat(\"\(cols[index].lowercased())\", \(subst))")
+      if params.count > 1 {
+        substString.append("\"\(cols[index].lowercased())\" = array_cat(\"\(cols[index].lowercased())\", \(subst))")
+      } else {
+        substString.append("\"\(cols[index].lowercased())\" = array_append(\"\(cols[index].lowercased())\", \(subst))")
+      }
     }
 
     paramString.append(String(describing: idValue))
@@ -124,7 +128,12 @@ extension PostgresStORM {
     params.enumerated().forEach { (index, param) in
       let (params, subst) = PostgresStORM.convertInto(param, &i)
       paramString += params
-      substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(\(subst))) t (elements))")
+
+      if params.count > 1 {
+        substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(\(subst))) t (elements))")
+      } else {
+        substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
+      }
     }
 
     paramString.append(String(describing: idValue))
@@ -147,7 +156,6 @@ extension PostgresStORM {
 
   @discardableResult
   public func pull(data: [(String, Any)], idName: String = "id", idValue: Any) throws -> Bool {
-
 
     var keys = [String]()
     var vals = [Any]()

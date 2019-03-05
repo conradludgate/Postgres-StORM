@@ -616,15 +616,42 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let add: [Int] = [8, 9]
-
     do {
-      try obj.push(cols: ["intarray"], params: [add], idName: "id", idValue: obj.id)
+      try obj.push(cols: ["intarray"], params: [[8, 9]], idName: "id", idValue: obj.id)
     } catch {
       XCTFail(String(describing: error))
     }
     print(obj.errorMsg)
     XCTAssert(obj.id > 0, "Object not saved (update)")
+
+    let obj2 = User()
+    obj2.id = obj.id
+
+    do {
+      try obj2.get()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert((obj.intarray + [8, 9]).elementsEqual(obj2.intarray), "Object not the same (intarray)")
+
+    do {
+      try obj.push(cols: ["intarray"], params: [10], idName: "id", idValue: obj.id)
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.errorMsg)
+    XCTAssert(obj.id > 0, "Object not saved (update)")
+
+    do {
+      try obj2.get()
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert((obj.intarray + [8, 9, 10]).elementsEqual(obj2.intarray), "Object not the same (intarray)")
   }
 
   func testPull() {
@@ -638,12 +665,41 @@ class PostgresStORMTests: XCTestCase {
     }
 
     do {
-      try obj.pull(cols: ["intarray"], params: [[4, 6] as! [Int]], idName: "id", idValue: obj.id)
+      try obj.pull(cols: ["intarray"], params: [[4, 6, 8]], idName: "id", idValue: obj.id)
     } catch {
       XCTFail(String(describing: error))
     }
     print(obj.errorMsg)
     XCTAssert(obj.id > 0, "Object not saved (update)")
+
+    let obj2 = User()
+    obj2.id = obj.id
+
+    do {
+      try obj2.get()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert([0, 2, 1].elementsEqual(obj2.intarray), "Object not the same (intarray)")
+
+    do {
+      try obj.pull(cols: ["intarray"], params: [1], idName: "id", idValue: obj.id)
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.errorMsg)
+    XCTAssert(obj.id > 0, "Object not saved (update)")
+
+    do {
+      try obj2.get()
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert([0, 2].elementsEqual(obj2.intarray), "Object not the same (intarray)")
   }
 
     /* =============================================================================================
