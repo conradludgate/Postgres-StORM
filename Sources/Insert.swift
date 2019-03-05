@@ -79,7 +79,7 @@ extension PostgresStORM {
 
     var i = 0
     params.forEach {
-      let (params, subst) = convertInto($0, &i)
+      let (params, subst) = PostgresStORM.convertInto($0, &i)
       paramString += params
       substString.append(subst)
     }

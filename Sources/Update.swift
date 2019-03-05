@@ -23,7 +23,7 @@ extension PostgresStORM {
 
     var i = 0
     params.enumerated().forEach { (index, param) in
-      let (params, subst) = convertInto(param, &i)
+      let (params, subst) = PostgresStORM.convertInto(param, &i)
       paramString += params
       substString.append("\"\(cols[index].lowercased())\" = \(subst)")
     }
@@ -73,7 +73,7 @@ extension PostgresStORM {
 
     var i = 0
     params.enumerated().forEach { (index, param) in
-      let (params, subst) = convertInto(param, &i)
+      let (params, subst) = PostgresStORM.convertInto(param, &i)
       print(param, params, subst)
       paramString += params
       substString.append("\"\(cols[index].lowercased())\" = array_cat(\"\(cols[index].lowercased())\", \(subst))")
@@ -122,7 +122,7 @@ extension PostgresStORM {
 
     var i = 0
     params.enumerated().forEach { (index, param) in
-      let (params, subst) = convertInto(param, &i)
+      let (params, subst) = PostgresStORM.convertInto(param, &i)
       paramString += params
       substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(\(subst))) t (elements))")
     }

@@ -95,7 +95,7 @@ extension PostgresStORM {
 		var set = [String]()
     var i = 0
 		data.forEach { (key, val) in
-      let (params, subst) = convertInto(val, &i)
+      let (params, subst) = PostgresStORM.convertInto(val, &i)
 
 			paramsString += params
 
@@ -120,7 +120,7 @@ extension PostgresStORM {
     var set = [String]()
     var i = 0
     data.forEach { (key, val) in
-      let (params, subst) = convertInto(val, &i)
+      let (params, subst) = PostgresStORM.convertInto(val, &i)
 
       paramsString += params
 
@@ -150,7 +150,7 @@ extension PostgresStORM {
 		var set = [String]()
     var i = 0
     data.forEach { (key, val) in
-      let (params, subst) = convertInto(val, &i)
+      let (params, subst) = PostgresStORM.convertInto(val, &i)
 
       paramsString += params
 
@@ -175,7 +175,7 @@ extension PostgresStORM {
     var set = [String]()
     var i = 0
     data.forEach { (key, val) in
-      let (params, subst) = convertInto(val, &i)
+      let (params, subst) = PostgresStORM.convertInto(val, &i)
 
       paramsString += params
 

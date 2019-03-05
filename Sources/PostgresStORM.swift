@@ -237,7 +237,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 	/// Table Creation (alias for setup)
 
-  open func determineType(_ t: Any.Type, at: Int = 1) -> String {
+  public class func determineType(_ t: Any.Type, at: Int = 1) -> String {
     if t == Int.self && at == 0 {
       return "serial"
     } else if t == Int.self || t == Int?.self {
@@ -268,7 +268,7 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  open func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
+  open class func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
     let t = type(of: v).self
     let type = determineType(t)
 
@@ -345,7 +345,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 				if !key.hasPrefix("internal_") && !key.hasPrefix("_") {
 					verbage = "\(key.lowercased()) "
 
-          verbage += determineType(type(of: child.value).self, at: opt.count)
+          verbage += PostgresStORM.determineType(type(of: child.value).self, at: opt.count)
 
 					if opt.count == 0 {
 						verbage += " NOT NULL"
