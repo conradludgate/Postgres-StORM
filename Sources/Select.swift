@@ -150,4 +150,36 @@ extension PostgresStORM {
 		}
 	}
 
+  public func count(
+    whereclause:  String,
+    params:      [Any],
+    joins:      [StORMDataSourceJoin] = [],
+    having:      [String] = [],
+    groupBy:    [String] = []
+    ) throws -> Int {
+
+    let clauseCount = "COUNT(*) AS counter"
+    var clauseWhere = ""
+
+    if whereclause.count > 0 {
+      clauseWhere = " WHERE \(whereclause)"
+    }
+
+    var paramsString = [String]()
+    for i in 0..<params.count {
+      paramsString.append(String(describing: params[i]))
+    }
+    do {
+      let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString)
+      var numrecords = 0
+      if (getCount.first != nil) {
+        numrecords = getCount.first?.data["counter"] as? Int ?? 0
+      }
+      return numrecords
+    } catch {
+      LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
+      self.error = StORMError.error("\(error)")
+      throw error
+    }
+  }
 }

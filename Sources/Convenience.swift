@@ -115,6 +115,30 @@ extension PostgresStORM {
 
 	}
 
+  public func findCount(_ data: [(String, Any)]) throws -> Int {
+    var paramsString = [String]()
+    var set = [String]()
+    var i = 0
+    data.forEach { (key, val) in
+      let (params, subst) = convertInto(val, &i)
+
+      paramsString += params
+
+      if params.count > 1 {
+        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+      } else {
+        set.append("\(key.lowercased()) = \(subst)")
+      }
+    }
+
+    do {
+      return try count(whereclause: set.joined(separator: " AND "), params: paramsString)
+    } catch {
+      LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
+      throw error
+    }
+  }
+
 
 	/// Performs a find on mathing column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
@@ -145,5 +169,29 @@ extension PostgresStORM {
 		}
 
 	}
+
+  public func findCount(_ data: [String:Any]) throws -> Int {
+    var paramsString = [String]()
+    var set = [String]()
+    var i = 0
+    data.forEach { (key, val) in
+      let (params, subst) = convertInto(val, &i)
+
+      paramsString += params
+
+      if params.count > 1 {
+        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+      } else {
+        set.append("\(key.lowercased()) = \(subst)")
+      }
+    }
+
+    do {
+      return try count(whereclause: set.joined(separator: " AND "), params: paramsString)
+    } catch {
+      LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
+      throw error
+    }
+  }
 
 }

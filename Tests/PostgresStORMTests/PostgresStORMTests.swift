@@ -306,6 +306,16 @@ class PostgresStORMTests: XCTestCase {
 			}
 		}
 
+    do {
+      let obj = User()
+      do {
+        let count = try obj.findCount([("lastname", "Ashpool")])
+        XCTAssertEqual(count, 200, "Object should have found the all the rows just inserted")
+      } catch {
+        XCTFail("Find error: \(obj.error.string())")
+      }
+    }
+
 		// Doing the same `find` should now return rows
 		do {
 			let obj = User()
