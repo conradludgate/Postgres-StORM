@@ -93,9 +93,17 @@ extension PostgresStORM {
 
 		var paramsString = [String]()
 		var set = [String]()
-		for i in 0..<data.count {
-			paramsString.append("\(data[i].1)")
-			set.append("\(data[i].0.lowercased()) = $\(i+1)")
+    var i = 0
+		data.forEach { (key, val) in
+      let (params, subst) = convertInto(val, &i)
+
+			paramsString += params
+
+      if params.count > 1 {
+        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+      } else {
+        set.append("\(key.lowercased()) = \(subst)")
+      }
 		}
 
 		do {
@@ -116,12 +124,18 @@ extension PostgresStORM {
 
 		var paramsString = [String]()
 		var set = [String]()
-		var counter = 0
-		for i in data.keys {
-			paramsString.append(data[i] as! String)
-			set.append("\(i.lowercased()) = $\(counter+1)")
-			counter += 1
-		}
+    var i = 0
+    data.forEach { (key, val) in
+      let (params, subst) = convertInto(val, &i)
+
+      paramsString += params
+
+      if params.count > 1 {
+        set.append("\(key.lowercased()) IN (select(unnest(\(subst)))")
+      } else {
+        set.append("\(key.lowercased()) = \(subst)")
+      }
+    }
 
 		do {
 			try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: [idname], cursor: cursor)

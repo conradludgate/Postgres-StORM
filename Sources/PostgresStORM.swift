@@ -237,62 +237,99 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 	/// Table Creation (alias for setup)
 
+  func determineType(_ t: Any.Type, at: Int = 1) -> String {
+    if t == Int.self && at == 0 {
+      return "serial"
+    } else if t == Int.self || t == Int?.self {
+      return "int"
+    } else if t == Bool.self || t == Bool?.self {
+      return "bool"
+    } else if t == [String].self {
+      return "text[]";
+    } else if t == [[String:Any]].self {
+      return "jsonb[]"
+    } else if t == [Int].self {
+      return "int[]"
+    } else if t == Double.self || t == Double?.self {
+      return "float8"
+    } else if t == UInt.self || t == UInt8.self || t == UInt16.self || t == UInt32.self || t == UInt64.self ||
+      t == UInt?.self || t == UInt8?.self || t == UInt16?.self || t == UInt32?.self || t == UInt64?.self{
+      return "bytea"
+    } else if t == [String:Any].self || t == [String:Any]?.self {
+      return "jsonb"
+    } else if t == String.self || t == String?.self {
+      return "text"
+    } else if t is CodableArray.Type {
+      return "jsonb[]"
+    } else if t is Codable.Type {
+      return "jsonb"
+    } else {
+      return "text"
+    }
+  }
+
+  func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
+    let t = type(of: v).self
+    let type = determineType(t)
+
+    switch type {
+    case "jsonb":
+      let param: String?
+      if t == [String:Any].self || t == [String:Any]?.self {
+        param = try? (v as? [String:Any] ?? [:]).jsonEncodedString()
+      } else {
+        param = (v as? Encodable).map { (try? $0.string()) ?? "{}" }
+      }
+
+      i += 1
+
+      return (param.map { [$0] } ?? [ "" ], "$\(i)::jsonb")
+    case "jsonb[]":
+      var params: [String] = []
+      var substs: [String] = []
+
+      if t == [[String:Any]].self {
+        (v as! [[String:Any]]).forEach { json in
+          if let jsonString = try? json.jsonEncodedString() {
+            params.append(jsonString)
+            i += 1
+            substs.append("$\(i)::jsonb")
+          }
+        }
+      } else {
+        let encoder = JSONEncoder()
+        (v as! [Encodable]).forEach { json in
+          if let jsonString = try? json.string(using: encoder) {
+            params.append(jsonString)
+            i += 1
+            substs.append("$\(i)::jsonb")
+          }
+        }
+      }
+
+      return (params, "ARRAY[\(substs.joined(separator: ","))]::jsonb[]")
+    case "text[]", "int[]", "bytea[]", "float8[]":
+      let subType = type[0..<type.count-2]
+      var params: [String] = []
+      var substs: [String] = []
+
+      (v as! [Any]).forEach {
+        params.append(String(describing: $0))
+        i += 1
+        substs.append("$\(i)::\(subType)")
+      }
+
+      return (params, "ARRAY[\(substs.joined(separator: ","))]::\(type)")
+
+    default:
+      i += 1
+      return ([String(describing: v)], "$\(i)::\(type)")
+    }
+  }
+
 	open func setupTable(_ str: String = "") throws {
 		try setup(str)
 	}
-
-	/// Table Creation
-	/// Requires the connection to be configured, as well as a valid "table" property to have been set in the class
-
-//  func getType(_ value: Any) -> String {
-//    let mirror = Mirror(reflecting: value)
-//
-//    guard let style = mirror.displayStyle else {
-//      if value is Int {
-//        return "int"
-//      } else if value is Bool {
-//        return "bool"
-//      }else if value is String {
-//        return "text"
-//      } else if value is [String:Any] {
-//        return "jsonb"
-//      } else {
-//        return "text"
-//      }
-//    }
-//
-//    switch style {
-//    case .struct,
-//         .class:
-//      print("class")
-//      var children: [String] = []
-//      for child in mirror.children {
-//        children.append(getType(child.value))
-//      }
-//      return "{\(children.joined(separator: ", "))}"
-//    case .collection:
-//      print("\(mirror.displayStyle!)")
-//      if value is [Int] {
-//        return "int[]"
-//      } else if value is [Bool] {
-//        return "bool[]"
-//      } else if value is [String] {
-//        return "text[]"
-//      } else if value is [[String:Any]] {
-//        return "jsonb[]"
-//      } else {
-//        return "text[]"
-//      }
-//    case .dictionary:
-//      if value is [String:Any] {
-//        return "jsonb"
-//      } else {
-//        return "text"
-//      }
-//    default:
-//      return ""
-//    }
-//  }
 
   open func setup(_ str: String = "") throws {
 		LogFile.info("Running setup: \(table())", logFile: "./StORMlog.txt")
@@ -308,36 +345,8 @@ open class PostgresStORM: StORM, StORMProtocol {
 				if !key.hasPrefix("internal_") && !key.hasPrefix("_") {
 					verbage = "\(key.lowercased()) "
 
-          let t = type(of: child.value).self
+          verbage += determineType(type(of: child.value).self, at: opt.count)
 
-					if t == Int.self && opt.count == 0 {
-						verbage += "serial"
-					} else if t == Int.self || t == Int?.self {
-						verbage += "int8"
-					} else if t == Bool.self || t == Bool?.self {
-						verbage += "bool"
-          } else if t == [String].self {
-            verbage += "text[]";
-          } else if t == [[String:Any]].self {
-            verbage += "jsonb[]"
-          } else if t == [Int].self {
-            verbage += "int[]"
-          } else if t == Double.self || t == Double?.self {
-						verbage += "float8"
-					} else if t == UInt.self || t == UInt8.self || t == UInt16.self || t == UInt32.self || t == UInt64.self ||
-              t == UInt?.self || t == UInt8?.self || t == UInt16?.self || t == UInt32?.self || t == UInt64?.self{
-						verbage += "bytea"
-          } else if t == [String:Any].self || t == [String:Any]?.self {
-            verbage += "jsonb"
-          } else if t == String.self || t == String?.self {
-            verbage += "text"
-          } else if t is CodableArray.Type {
-            verbage += "jsonb[]"
-          } else if t is Codable.Type {
-            verbage += "jsonb"
-          } else {
-						verbage += "text"
-					}
 					if opt.count == 0 {
 						verbage += " NOT NULL"
 						keyName = key

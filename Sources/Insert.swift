@@ -77,109 +77,11 @@ extension PostgresStORM {
     var paramString = [String]()
     var substString = [String]()
 
-    var i = 1
-    params.forEach { param in
-//      LogFile.info("\(type(of: param).self) = \(param)", logFile: "./StORMlog.txt")
-
-      let t = type(of: param)
-//      print(t.self is EncodableArray.Type, t.self is OptionalEncodableArray.Type)
-
-      if t.self == [String:Any].self || t.self == [String:Any]?.self {
-
-        let jsonData = try? (param as? [String:Any] ?? [:]).jsonEncodedString()
-
-        paramString.append(jsonData!)
-        substString.append("$\(i)::jsonb")
-        i += 1
-
-      } else if t.self == [[String:Any]].self {
-        var arrayVals: [String] = []
-
-        (param as! [[String:Any]]).forEach { json in
-          let jsonData = try? json.jsonEncodedString()
-
-          paramString.append(jsonData!)
-          arrayVals.append("$\(i)::jsonb")
-          i += 1
-        }
-
-        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
-
-      } else if let array = param as? [Any] {
-        var arrayVals: [String] = []
-
-        let type: String
-        if t.self == [String].self {
-          type = "text[]"
-        } else if t.self == [Int].self {
-          type = "int[]"
-        } else if t.self is EncodableArray.Type {
-
-          let encodablearray = array as! [Encodable]
-
-          guard encodablearray.count > 0 else {
-            substString.append("ARRAY[]::jsonb[]")
-            return
-          }
-
-          let encoder = JSONEncoder()
-          encodablearray.forEach { encodable in
-            
-            paramString.append((try? encodable.string(using: encoder)) ?? "{}")
-            arrayVals.append("$\(i)::jsonb")
-            i += 1
-          }
-
-          substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
-          return
-        } else if t.self == [[String:Any]].self {
-
-          let jsonarray = array as! [[String:Any]]
-
-          guard jsonarray.count > 0 else {
-            substString.append("ARRAY[]::jsonb[]")
-            return
-          }
-
-          jsonarray.forEach { json in
-
-            paramString.append((try? json.jsonEncodedString()) ?? "{}")
-            arrayVals.append("$\(i)::jsonb")
-            i += 1
-          }
-
-          substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::jsonb[]")
-          return
-        } else {
-          type = "text[]"
-        }
-
-        array.forEach { elem in
-          paramString.append(String(describing: elem))
-          arrayVals.append("$\(i)")
-          i += 1
-        }
-
-        substString.append("ARRAY[\(arrayVals.joined(separator: ","))]::\(type)")
-      } else if t.self == String.self || t.self == String?.self {
-        paramString.append((param as? String) ?? "")
-        substString.append("$\(i)::text")
-        i += 1
-
-      } else if t.self == Int.self || t.self == Int?.self {
-        paramString.append((param as? Int).map{ String(describing: $0) } ?? "")
-        substString.append("$\(i)::int")
-        i += 1
-
-      } else if t.self is Encodable.Type || t.self is OptionalEncodable.Type {
-        paramString.append((param as? Encodable).map { (try? $0.string()) ?? "{}" } ?? "{}")
-        substString.append("$\(i)::jsonb")
-        i += 1
-      } else {
-        paramString.append(String(describing: param))
-        substString.append("$\(i)")
-        i += 1
-      }
+    var i = 0
+    params.forEach {
+      let (params, subst) = convertInto($0, &i)
+      paramString += params
+      substString.append(subst)
     }
 
 		//"\"" + columns.joined(separator: "\",\"") + "\""

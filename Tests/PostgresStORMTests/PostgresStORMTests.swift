@@ -332,6 +332,61 @@ class PostgresStORMTests: XCTestCase {
 			}
 		}
 	}
+
+  func testFindIn() {
+    // Ensure table is empty
+    do {
+      let obj = User()
+      let tableName = obj.table()
+      _ = try? obj.sql("DELETE FROM \(tableName)", params: [])
+    }
+
+    let data = (195..<205).map { "Tessier\($0)" } + (5..<15).map { "Molly\($0)" }
+
+    // Doing a `find` with an empty table should yield zero results
+    do {
+      let obj = User()
+      do {
+        try obj.find([("firstname", data)])
+        XCTAssertEqual(obj.results.rows.count, 0)
+        XCTAssertEqual(obj.results.cursorData.totalRecords, 0)
+      } catch {
+        XCTFail("Find error: \(obj.error.string())")
+      }
+    }
+
+    // Insert more rows than the StORMCursor().limit
+    for i in 0..<200 {
+      let obj = User()
+      obj.firstname = "Tessier\(i)"
+      obj.lastname = "Ashpool"
+      do {
+        try obj.save { id in obj.id = id as! Int }
+      } catch {
+        XCTFail(String(describing: error))
+      }
+    }
+    for i in 0..<10 {
+      let obj = User()
+      obj.firstname = "Molly\(i)"
+      do {
+        try obj.save { id in obj.id = id as! Int }
+      } catch {
+        XCTFail(String(describing: error))
+      }
+    }
+
+    // Doing the same `find` should now return rows
+    do {
+      let obj = User()
+      do {
+        try obj.find([("firstname", data)])
+        XCTAssertEqual(obj.results.rows.count, 10, "Object should have found the all the rows just inserted. Limited by the default cursor limit.")
+      } catch {
+        XCTFail("Find error: \(obj.error.string())")
+      }
+    }
+  }
 	
 	/* =============================================================================================
 	FindAll
@@ -506,10 +561,79 @@ class PostgresStORMTests: XCTestCase {
     } catch {
       XCTFail(String(describing: error))
     }
-    print(obj.struct_)
-    print(obj2.struct_)
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
     XCTAssert(obj.struct_ == obj2.struct_, "Object not the same (struct)")
+  }
+
+  func testSelectJson() {
+    // Ensure table is empty
+    do {
+      let obj = User()
+      let tableName = obj.table()
+      _ = try? obj.sql("DELETE FROM \(tableName)", params: [])
+    }
+
+    let obj = User()
+    obj.json = ["foo": "Hello", "bar": 1]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.find(["json->>'foo'": "Hello"])
+//      try obj2.select(whereclause: "json->>'foo' = $1", params: ["Hello"], orderby: [])
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert((obj.json! as NSDictionary).isEqual(obj2.json ?? [:]), "Object not the same (json)")
+  }
+
+  func testPush() {
+    let obj = User()
+    obj.intarray = [0, 4, 2, 6, 1]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let add: [Int] = [8, 9]
+
+    do {
+      try obj.push(cols: ["intarray"], params: [add], idName: "id", idValue: obj.id)
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.errorMsg)
+    XCTAssert(obj.id > 0, "Object not saved (update)")
+  }
+
+  func testPull() {
+    let obj = User()
+    obj.intarray = [0, 4, 2, 6, 1]
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    do {
+      try obj.pull(cols: ["intarray"], params: [[4, 6] as! [Int]], idName: "id", idValue: obj.id)
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    print(obj.errorMsg)
+    XCTAssert(obj.id > 0, "Object not saved (update)")
   }
 
     /* =============================================================================================
@@ -565,6 +689,9 @@ class PostgresStORMTests: XCTestCase {
       ("testStructArray", testStructArray),
       ("testStruct", testStruct),
       ("testIntArray", testIntArray),
+      ("testSelectJson", testSelectJson),
+      ("testPush", testPush),
+      ("testPull", testPull),
       ("testJsonAggregation", testJsonAggregation)
 		]
 	}
