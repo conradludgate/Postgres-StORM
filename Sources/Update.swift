@@ -24,16 +24,15 @@ extension PostgresStORM {
     var i = 0
     params.enumerated().forEach { (index, param) in
       let (params, subst) = PostgresStORM.convertInto(param, &i)
-      paramString += params
-      substString.append("\"\(cols[index].lowercased())\" = \(subst)")
+      if params.count > 0 {
+        paramString += params
+        substString.append("\"\(cols[index].lowercased())\" = \(subst)")
+      }
     }
 
     paramString.append(String(describing: idValue))
 
     let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
-
-    LogFile.debug("Params: \(paramString.joined(separator: ", "))", logFile: "./StORMlog.txt")
-    LogFile.debug("Substs: \(substString.joined(separator: ", "))", logFile: "./StORMlog.txt")
 
 		do {
 			try exec(str, params: paramString)
@@ -74,11 +73,11 @@ extension PostgresStORM {
     var i = 0
     params.enumerated().forEach { (index, param) in
       let (params, subst) = PostgresStORM.convertInto(param, &i)
-      print(param, params, subst)
+
       paramString += params
       if params.count > 1 {
         substString.append("\"\(cols[index].lowercased())\" = array_cat(\"\(cols[index].lowercased())\", \(subst))")
-      } else {
+      } else if params.count == 1 {
         substString.append("\"\(cols[index].lowercased())\" = array_append(\"\(cols[index].lowercased())\", \(subst))")
       }
     }
@@ -86,9 +85,6 @@ extension PostgresStORM {
     paramString.append(String(describing: idValue))
 
     let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
-
-    LogFile.debug("Params: \(paramString.joined(separator: ", "))", logFile: "./StORMlog.txt")
-    LogFile.debug("Substs: \(substString.joined(separator: ", "))", logFile: "./StORMlog.txt")
 
     do {
       try exec(str, params: paramString)
@@ -131,7 +127,7 @@ extension PostgresStORM {
 
       if params.count > 1 {
         substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(\(subst))) t (elements))")
-      } else {
+      } else if params.count == 1 {
         substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
       }
     }
@@ -139,9 +135,6 @@ extension PostgresStORM {
     paramString.append(String(describing: idValue))
 
     let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
-
-    LogFile.debug("Params: \(paramString.joined(separator: ", "))", logFile: "./StORMlog.txt")
-    LogFile.debug("Substs: \(substString.joined(separator: ", "))", logFile: "./StORMlog.txt")
 
     do {
       try exec(str, params: paramString)
@@ -170,4 +163,82 @@ extension PostgresStORM {
       throw StORMError.error("\(error)")
     }
   }
+
+//  @discardableResult
+//  public func update(_ query: [String:Any], set: [String:Any], pull: [String:Any], push: [String:Any], addToSet: [String:Any], returning: [String] = ["*"]) throws -> Bool {
+//    var paramString = [String]()
+//    var substString = [String]()
+//
+//    var i = 0
+//
+//    set.forEach { (col, param) in
+//      let (params, subst) = PostgresStORM.convertInto(param, &i)
+//      paramString += params
+//      substString.append("\"\(col.lowercased())\" = \(subst)")
+//    }
+//
+//    pull.forEach { (col, param) in
+//      let (params, subst) = PostgresStORM.convertInto(param, &i)
+//      paramString += params
+//
+//      if params.count > 1 {
+//        substString.append("\"\(col.lowercased())\" = (select array_agg(elements) from (select unnest(\"\(col.lowercased())\") except select unnest(\(subst))) t (elements))")
+//      } else {
+//        substString.append("\"\(col.lowercased())\" = (select array_agg(elements) from (select unnest(\"\(col.lowercased())\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
+//      }
+//    }
+//
+//    push.forEach { (col, param) in
+//      let (params, subst) = PostgresStORM.convertInto(param, &i)
+//      paramString += params
+//
+//      if params.count > 1 {
+//        substString.append("\"\(col.lowercased())\" = array_cat(\"\(col.lowercased())\", \(subst))")
+//      } else {
+//        substString.append("\"\(col.lowercased())\" = array_append(\"\(col.lowercased())\", \(subst))")
+//      }
+//    }
+//
+//    addToSet.forEach { (col, param) in
+//      let (params, subst) = PostgresStORM.convertInto(param, &i)
+//      paramString += params
+//
+//      substString.append("\"\(col.lowercased())\" = (SELECT ARRAY_AGG(DISTINCT e) FROM UNNEST(\"\(col.lowercased())\" || \(subst)) e)")
+//    }
+//
+//    var querySubst: [String] = []
+//    query.forEach { (col, param) in
+//      let (params, subst) = PostgresStORM.convertInto(param, &i)
+//      paramString += params
+//
+//      querySubst.append("\"\(col.lowercased())\" = \(subst)")
+//    }
+//
+//    let whereclause: String
+//    if querySubst.count > 0 {
+//      whereclause = "WHERE \(querySubst.joined(separator: " AND "))"
+//    } else {
+//      whereclause = ""
+//    }
+//
+//    let returningclause: String
+//    if querySubst.count > 0 {
+//      returningclause = "RETURNING \(returning.joined(separator: ", "))"
+//    } else {
+//      returningclause = ""
+//    }
+//
+//    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) \(whereclause) \(returningclause)"
+//
+//    do {
+//      results.rows = try execRows(str, params: paramString)
+//      if results.rows.count == 1 { makeRow() }
+//    } catch {
+//      LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
+//      self.error = StORMError.error("\(error)")
+//      throw error
+//    }
+//
+//    return true
+//  }
 }

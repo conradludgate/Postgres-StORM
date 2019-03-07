@@ -101,7 +101,7 @@ extension PostgresStORM {
 
       if params.count > 1 {
         set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
-      } else {
+      } else if params.count == 1 {
         set.append("\(key.lowercased()) = \(subst)")
       }
 		}
@@ -126,7 +126,7 @@ extension PostgresStORM {
 
       if params.count > 1 {
         set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
-      } else {
+      } else if params.count == 1 {
         set.append("\(key.lowercased()) = \(subst)")
       }
     }
@@ -156,7 +156,7 @@ extension PostgresStORM {
 
       if params.count > 1 {
         set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
-      } else {
+      } else if params.count == 1 {
         set.append("\(key.lowercased()) = \(subst)")
       }
     }
@@ -181,7 +181,7 @@ extension PostgresStORM {
 
       if params.count > 1 {
         set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
-      } else {
+      } else if params.count == 1 {
         set.append("\(key.lowercased()) = \(subst)")
       }
     }

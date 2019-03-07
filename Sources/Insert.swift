@@ -77,16 +77,21 @@ extension PostgresStORM {
     var paramString = [String]()
     var substString = [String]()
 
+    var newcols: [String] = []
+
     var i = 0
-    params.forEach {
-      let (params, subst) = PostgresStORM.convertInto($0, &i)
-      paramString += params
-      substString.append(subst)
+    params.enumerated().forEach { (index, param) in
+      let (params, subst) = PostgresStORM.convertInto(param, &i)
+      if params.count > 0 {
+        paramString += params
+        substString.append(subst)
+        newcols.append(cols[index])
+      }
     }
 
 		//"\"" + columns.joined(separator: "\",\"") + "\""
 
-		let colsjoined = "\"" + cols.joined(separator: "\",\"") + "\""
+		let colsjoined = "\"" + newcols.joined(separator: "\",\"") + "\""
 		let str = "INSERT INTO \(self.table()) (\(colsjoined.lowercased())) VALUES(\(substString.joined(separator: ","))) RETURNING \"\(idcolumn.lowercased())\""
 
 		do {

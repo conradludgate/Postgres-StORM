@@ -269,6 +269,14 @@ open class PostgresStORM: StORM, StORMProtocol {
   }
 
   public static func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
+    if let ds = Mirror(reflecting: v).displayStyle {
+      if case .optional = ds {
+        guard let _ = Mirror(reflecting: v).children.first else {
+          return ([], "")
+        }
+      }
+    }
+
     let t = type(of: v).self
     let type = determineType(t)
 

@@ -89,7 +89,7 @@ extension PostgresStORM {
             }
           }
 
-          print(output!)
+          print(output)
 
           params[result.fieldName(index: f)!] = output
 
