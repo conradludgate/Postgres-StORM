@@ -268,13 +268,20 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  public static func convertInto(_ v: Any, _ i: inout Int) -> ([String], String) {
-    if let ds = Mirror(reflecting: v).displayStyle {
+  public static func convertInto(_ val: Any, _ i: inout Int) -> ([String], String) {
+    let v: Any
+    if let ds = Mirror(reflecting: val).displayStyle {
       if case .optional = ds {
-        guard let _ = Mirror(reflecting: v).children.first else {
+        if let val = Mirror(reflecting: val).children.first {
+          v = val.value
+        } else {
           return ([], "")
         }
+      } else {
+        v = val
       }
+    } else {
+      v = val
     }
 
     let t = type(of: v).self
@@ -331,6 +338,15 @@ open class PostgresStORM: StORM, StORMProtocol {
 
     default:
       i += 1
+
+      if let ds = Mirror(reflecting: v).displayStyle {
+        if case .optional = ds {
+          if let v = Mirror(reflecting: v).children.first {
+            return ([String(describing: v)], "$\(i)::\(type)")
+          }
+        }
+      }
+
       return ([String(describing: v)], "$\(i)::\(type)")
     }
   }

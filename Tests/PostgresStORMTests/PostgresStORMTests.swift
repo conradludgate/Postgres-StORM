@@ -13,7 +13,7 @@ class User: PostgresStORM {
 	// NOTE: First param in class should be the ID.
 	var id				: Int = 0
 	var firstname		: String = ""
-	var lastname		: String = ""
+	var lastname		: String? = ""
 	var email			: String = ""
   var optional: Double?
   var stringarray: [String] = []
