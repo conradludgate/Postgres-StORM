@@ -13,13 +13,13 @@ class User: PostgresStORM {
 	// NOTE: First param in class should be the ID.
 	var id				: Int = 0
 	var firstname		: String = ""
-	var lastname		: String? = ""
+	var lastName		: String? = ""
 	var email			: String = ""
   var optional: Double?
-  var stringArray: [String] = []
+  var stringArray: [String]!
   var intarray: [Int] = []
-  var json: [String:Any]?
-  var jsonarray: [[String:Any]] = []
+  var Json: [String:Any]?
+  var jsonArray: [[String:Any]] = []
   var struct_: Data?
   var structarray: [Data] = []
 
@@ -32,11 +32,11 @@ class User: PostgresStORM {
 
     id				= this.data["id"] as? Int ?? 0
 		firstname		= this.data["firstname"] as? String ?? ""
-		lastname		= this.data["lastname"] as? String ?? ""
+		lastName		= this.data["lastName"] as? String ?? ""
 		email			= this.data["email"] as? String ?? ""
 		stringArray		= this.data["stringArray"] as? [String] ?? []
-    json = this.data["json"] as? [String:Any] ?? [:]
-    jsonarray = this.data["jsonarray"] as? [[String:Any]] ?? []
+    Json = this.data["Json"] as? [String:Any] ?? [:]
+    jsonArray = this.data["jsonArray"] as? [[String:Any]] ?? []
     intarray = this.data["intarray"] as? [Int] ?? []
     struct_ = Data.fromJson(this.data["struct_"], using: decoder) ?? Data(foo: "", bar: 0)
     structarray = Data.fromJsonArray(this.data["structarray"], using: decoder)
@@ -85,7 +85,7 @@ class PostgresStORMTests: XCTestCase {
 
 		let obj = User()
 		obj.firstname = "X"
-		obj.lastname = "Y"
+		obj.lastName = "Y"
 
 		do {
 			try obj.save {id in obj.id = id as! Int }
@@ -101,7 +101,7 @@ class PostgresStORMTests: XCTestCase {
 	func testSaveUpdate() {
 		let obj = User()
 		obj.firstname = "X"
-		obj.lastname = "Y"
+		obj.lastName = "Y"
 
 		do {
 			try obj.save {id in obj.id = id as! Int }
@@ -110,7 +110,7 @@ class PostgresStORMTests: XCTestCase {
 		}
 
 		obj.firstname = "A"
-		obj.lastname = "B"
+		obj.lastName = "B"
 		do {
 			try obj.save()
 		} catch {
@@ -138,7 +138,7 @@ class PostgresStORMTests: XCTestCase {
 		do {
 			obj.id			= 10001
 			obj.firstname	= "Mister"
-			obj.lastname	= "PotatoHead"
+			obj.lastName	= "PotatoHead"
 			obj.email		= "potato@example.com"
 			try obj.create()
 		} catch {
@@ -153,7 +153,7 @@ class PostgresStORMTests: XCTestCase {
 	func testGetByPassingID() {
 		let obj = User()
 		obj.firstname = "X"
-		obj.lastname = "Y"
+		obj.lastName = "Y"
 
 		do {
 			try obj.save {id in obj.id = id as! Int }
@@ -170,7 +170,7 @@ class PostgresStORMTests: XCTestCase {
 		}
 		XCTAssert(obj.id == obj2.id, "Object not the same (id)")
 		XCTAssert(obj.firstname == obj2.firstname, "Object not the same (firstname)")
-		XCTAssert(obj.lastname == obj2.lastname, "Object not the same (lastname)")
+		XCTAssert(obj.lastName == obj2.lastName, "Object not the same (lastname)")
 	}
 
 
@@ -180,7 +180,7 @@ class PostgresStORMTests: XCTestCase {
 	func testGetByID() {
 		let obj = User()
 		obj.firstname = "X"
-		obj.lastname = "Y"
+		obj.lastName = "Y"
 
 		do {
 			try obj.save {id in obj.id = id as! Int }
@@ -198,7 +198,7 @@ class PostgresStORMTests: XCTestCase {
 		}
 		XCTAssert(obj.id == obj2.id, "Object not the same (id)")
 		XCTAssert(obj.firstname == obj2.firstname, "Object not the same (firstname)")
-		XCTAssert(obj.lastname == obj2.lastname, "Object not the same (lastname)")
+		XCTAssert(obj.lastName == obj2.lastName, "Object not the same (lastname)")
 	}
 
 	/* =============================================================================================
@@ -278,7 +278,7 @@ class PostgresStORMTests: XCTestCase {
 		do {
 			let obj = User()
 			do {
-				try obj.find([("lastname", "Ashpool")])
+				try obj.find([("\"lastName\"", "Ashpool")])
 				XCTAssertEqual(obj.results.rows.count, 0)
 				XCTAssertEqual(obj.results.cursorData.totalRecords, 0)
 			} catch {
@@ -290,7 +290,7 @@ class PostgresStORMTests: XCTestCase {
 		for i in 0..<200 {
 			let obj = User()
 			obj.firstname = "Tessier\(i)"
-			obj.lastname = "Ashpool"
+			obj.lastName = "Ashpool"
 			do {
 				try obj.save { id in obj.id = id as! Int }
 			} catch {
@@ -310,7 +310,7 @@ class PostgresStORMTests: XCTestCase {
     do {
       let obj = User()
       do {
-        let count = try obj.findCount([("lastname", "Ashpool")])
+        let count = try obj.findCount([("\"lastName\"", "Ashpool")])
         XCTAssertEqual(count, 200, "Object should have found the all the rows just inserted")
       } catch {
         XCTFail("Find error: \(obj.error.string())")
@@ -321,7 +321,7 @@ class PostgresStORMTests: XCTestCase {
 		do {
 			let obj = User()
 			do {
-				try obj.find([("lastname", "Ashpool")])
+				try obj.find([("\"lastName\"", "Ashpool")])
 				let cursorLimit: Int = StORMCursor().limit
 				XCTAssertEqual(obj.results.rows.count, cursorLimit, "Object should have found the all the rows just inserted. Limited by the default cursor limit.")
 				XCTAssertEqual(obj.results.cursorData.totalRecords, 200, "Object should have found the all the rows just inserted")
@@ -335,7 +335,7 @@ class PostgresStORMTests: XCTestCase {
 			let obj = User()
 			do {
 				let cursor = StORMCursor(limit: 150, offset: 0)
-				try obj.find(["lastname": "Ashpool"], cursor: cursor)
+				try obj.find(["\"lastName\"": "Ashpool"], cursor: cursor)
 				XCTAssertEqual(obj.results.rows.count, cursor.limit, "Object should have found the all the rows just inserted. Limited by the provided cursor limit.")
 				XCTAssertEqual(obj.results.cursorData.totalRecords, 200, "Object should have found the all the rows just inserted")
 			} catch {
@@ -370,7 +370,7 @@ class PostgresStORMTests: XCTestCase {
     for i in 0..<200 {
       let obj = User()
       obj.firstname = "Tessier\(i)"
-      obj.lastname = "Ashpool"
+      obj.lastName = "Ashpool"
       do {
         try obj.save { id in obj.id = id as! Int }
       } catch {
@@ -486,7 +486,7 @@ class PostgresStORMTests: XCTestCase {
 
   func testJson() {
     let obj = User()
-    obj.json = ["a": "b", "c": "zee"]
+    obj.Json = ["a": "b", "c": "zee"]
 
     do {
       try obj.save {id in obj.id = id as! Int }
@@ -504,12 +504,12 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    XCTAssert((obj.json! as NSDictionary).isEqual(obj2.json ?? [:]), "Object not the same (json)")
+    XCTAssert((obj.Json! as NSDictionary).isEqual(obj2.Json ?? [:]), "Object not the same (json)")
   }
 
   func testJsonArray() {
     let obj = User()
-    obj.jsonarray = [["a": "b", "c": "zee"], ["foo": "bar", "one": "two"]]
+    obj.jsonArray = [["a": "b", "c": "zee"], ["foo": "bar", "one": "two"]]
 
     do {
       try obj.save {id in obj.id = id as! Int }
@@ -527,7 +527,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    XCTAssert(obj.jsonarray.elementsEqual(obj2.jsonarray, by: { ($0 as NSDictionary).isEqual(to: $1) } ), "Object not the same (jsonarray)")
+    XCTAssert(obj.jsonArray.elementsEqual(obj2.jsonArray, by: { ($0 as NSDictionary).isEqual(to: $1) } ), "Object not the same (jsonarray)")
   }
 
   func testStructArray() {
@@ -585,7 +585,7 @@ class PostgresStORMTests: XCTestCase {
     }
 
     let obj = User()
-    obj.json = ["foo": "Hello", "bar": 1]
+    obj.Json = ["foo": "Hello", "bar": 1]
 
     do {
       try obj.save {id in obj.id = id as! Int }
@@ -596,7 +596,7 @@ class PostgresStORMTests: XCTestCase {
     let obj2 = User()
 
     do {
-      try obj2.find(["json->>'foo'": "Hello"])
+      try obj2.find(["\"Json\"->>'foo'": "Hello"])
 //      try obj2.select(whereclause: "json->>'foo' = $1", params: ["Hello"], orderby: [])
       try obj.delete()
       try obj2.delete()
@@ -604,7 +604,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    XCTAssert((obj.json! as NSDictionary).isEqual(obj2.json ?? [:]), "Object not the same (json)")
+    XCTAssert((obj.Json! as NSDictionary).isEqual(obj2.Json ?? [:]), "Object not the same (json)")
   }
 
   func testPush() {

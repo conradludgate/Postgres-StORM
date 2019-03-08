@@ -244,11 +244,11 @@ open class PostgresStORM: StORM, StORMProtocol {
       return "int"
     } else if t == Bool.self || t == Bool?.self {
       return "bool"
-    } else if t == [String].self {
+    } else if t == [String].self || t == [String]?.self {
       return "text[]";
-    } else if t == [[String:Any]].self {
+    } else if t == [[String:Any]].self || t == [[String:Any]]?.self {
       return "jsonb[]"
-    } else if t == [Int].self {
+    } else if t == [Int].self || t == [Int]?.self {
       return "int[]"
     } else if t == Double.self || t == Double?.self {
       return "float8"
