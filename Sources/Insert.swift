@@ -43,7 +43,7 @@ extension PostgresStORM {
 		var keys = [String]()
 		var vals = [Any]()
 		for i in data.keys {
-			keys.append(i.lowercased())
+			keys.append(i)
 			vals.append(data[i]!)
 		}
 
@@ -92,11 +92,11 @@ extension PostgresStORM {
 		//"\"" + columns.joined(separator: "\",\"") + "\""
 
 		let colsjoined = "\"" + newcols.joined(separator: "\",\"") + "\""
-		let str = "INSERT INTO \(self.table()) (\(colsjoined.lowercased())) VALUES(\(substString.joined(separator: ","))) RETURNING \"\(idcolumn.lowercased())\""
+		let str = "INSERT INTO \(self.table()) (\(colsjoined)) VALUES(\(substString.joined(separator: ","))) RETURNING \"\(idcolumn)\""
 
 		do {
 			let response = try exec(str, params: paramString)
-			return parseRows(response)[0].data[idcolumn.lowercased()]!
+			return parseRows(response)[0].data[idcolumn]!
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")

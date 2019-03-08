@@ -26,13 +26,13 @@ extension PostgresStORM {
       let (params, subst) = PostgresStORM.convertInto(param, &i)
       if params.count > 0 {
         paramString += params
-        substString.append("\"\(cols[index].lowercased())\" = \(subst)")
+        substString.append("\"\(cols[index])\" = \(subst)")
       }
     }
 
     paramString.append(String(describing: idValue))
 
-    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
+    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName)\" = $\(i + 1)"
 
 		do {
 			try exec(str, params: paramString)
@@ -54,7 +54,7 @@ extension PostgresStORM {
 		var keys = [String]()
 		var vals = [Any]()
 		for i in 0..<data.count {
-			keys.append(data[i].0.lowercased())
+			keys.append(data[i].0)
 			vals.append(data[i].1)
 		}
 		do {
@@ -76,15 +76,15 @@ extension PostgresStORM {
 
       paramString += params
       if params.count > 1 {
-        substString.append("\"\(cols[index].lowercased())\" = array_cat(\"\(cols[index].lowercased())\", \(subst))")
+        substString.append("\"\(cols[index])\" = array_cat(\"\(cols[index])\", \(subst))")
       } else if params.count == 1 {
-        substString.append("\"\(cols[index].lowercased())\" = array_append(\"\(cols[index].lowercased())\", \(subst))")
+        substString.append("\"\(cols[index])\" = array_append(\"\(cols[index])\", \(subst))")
       }
     }
 
     paramString.append(String(describing: idValue))
 
-    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
+    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName)\" = $\(i + 1)"
 
     do {
       try exec(str, params: paramString)
@@ -103,7 +103,7 @@ extension PostgresStORM {
     var keys = [String]()
     var vals = [Any]()
     for i in 0..<data.count {
-      keys.append(data[i].0.lowercased())
+      keys.append(data[i].0)
       vals.append(data[i].1)
     }
     do {
@@ -126,15 +126,15 @@ extension PostgresStORM {
       paramString += params
 
       if params.count > 1 {
-        substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(\(subst))) t (elements))")
+        substString.append("\"\(cols[index])\" = (select array_agg(elements) from (select unnest(\"\(cols[index])\") except select unnest(\(subst))) t (elements))")
       } else if params.count == 1 {
-        substString.append("\"\(cols[index].lowercased())\" = (select array_agg(elements) from (select unnest(\"\(cols[index].lowercased())\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
+        substString.append("\"\(cols[index])\" = (select array_agg(elements) from (select unnest(\"\(cols[index])\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
       }
     }
 
     paramString.append(String(describing: idValue))
 
-    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName.lowercased())\" = $\(i + 1)"
+    let str = "UPDATE \(self.table()) SET \(substString.joined(separator: ", ")) WHERE \"\(idName)\" = $\(i + 1)"
 
     do {
       try exec(str, params: paramString)
@@ -153,7 +153,7 @@ extension PostgresStORM {
     var keys = [String]()
     var vals = [Any]()
     for i in 0..<data.count {
-      keys.append(data[i].0.lowercased())
+      keys.append(data[i].0)
       vals.append(data[i].1)
     }
     do {
@@ -174,7 +174,7 @@ extension PostgresStORM {
 //    set.forEach { (col, param) in
 //      let (params, subst) = PostgresStORM.convertInto(param, &i)
 //      paramString += params
-//      substString.append("\"\(col.lowercased())\" = \(subst)")
+//      substString.append("\"\(col)\" = \(subst)")
 //    }
 //
 //    pull.forEach { (col, param) in
@@ -182,9 +182,9 @@ extension PostgresStORM {
 //      paramString += params
 //
 //      if params.count > 1 {
-//        substString.append("\"\(col.lowercased())\" = (select array_agg(elements) from (select unnest(\"\(col.lowercased())\") except select unnest(\(subst))) t (elements))")
+//        substString.append("\"\(col)\" = (select array_agg(elements) from (select unnest(\"\(col)\") except select unnest(\(subst))) t (elements))")
 //      } else {
-//        substString.append("\"\(col.lowercased())\" = (select array_agg(elements) from (select unnest(\"\(col.lowercased())\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
+//        substString.append("\"\(col)\" = (select array_agg(elements) from (select unnest(\"\(col)\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
 //      }
 //    }
 //
@@ -193,9 +193,9 @@ extension PostgresStORM {
 //      paramString += params
 //
 //      if params.count > 1 {
-//        substString.append("\"\(col.lowercased())\" = array_cat(\"\(col.lowercased())\", \(subst))")
+//        substString.append("\"\(col)\" = array_cat(\"\(col)\", \(subst))")
 //      } else {
-//        substString.append("\"\(col.lowercased())\" = array_append(\"\(col.lowercased())\", \(subst))")
+//        substString.append("\"\(col)\" = array_append(\"\(col)\", \(subst))")
 //      }
 //    }
 //
@@ -203,7 +203,7 @@ extension PostgresStORM {
 //      let (params, subst) = PostgresStORM.convertInto(param, &i)
 //      paramString += params
 //
-//      substString.append("\"\(col.lowercased())\" = (SELECT ARRAY_AGG(DISTINCT e) FROM UNNEST(\"\(col.lowercased())\" || \(subst)) e)")
+//      substString.append("\"\(col)\" = (SELECT ARRAY_AGG(DISTINCT e) FROM UNNEST(\"\(col)\" || \(subst)) e)")
 //    }
 //
 //    var querySubst: [String] = []
@@ -211,7 +211,7 @@ extension PostgresStORM {
 //      let (params, subst) = PostgresStORM.convertInto(param, &i)
 //      paramString += params
 //
-//      querySubst.append("\"\(col.lowercased())\" = \(subst)")
+//      querySubst.append("\"\(col)\" = \(subst)")
 //    }
 //
 //    let whereclause: String

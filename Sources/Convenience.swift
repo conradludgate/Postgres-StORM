@@ -43,7 +43,7 @@ extension PostgresStORM {
 	public func delete() throws {
 		let (idname, idval) = firstAsKey()
 		do {
-			try exec(deleteSQL(self.table(), idName: idname.lowercased()), params: [String(describing: idval)])
+			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: idval)])
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")
@@ -55,7 +55,7 @@ extension PostgresStORM {
 	public func delete(_ id: Any) throws {
 		let (idname, _) = firstAsKey()
 		do {
-			try exec(deleteSQL(self.table(), idName: idname.lowercased()), params: [String(describing: id)])
+			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: id)])
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")
@@ -67,7 +67,7 @@ extension PostgresStORM {
 	public func get(_ id: Any) throws {
 		let (idname, _) = firstAsKey()
 		do {
-			try select(whereclause: "\"\(idname.lowercased())\" = $1", params: [id], orderby: [])
+			try select(whereclause: "\"\(idname)\" = $1", params: [id], orderby: [])
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -78,7 +78,7 @@ extension PostgresStORM {
 	public func get() throws {
 		let (idname, idval) = firstAsKey()
 		do {
-			try select(whereclause: "\"\(idname.lowercased())\" = $1", params: ["\(idval)"], orderby: [])
+			try select(whereclause: "\"\(idname)\" = $1", params: ["\(idval)"], orderby: [])
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -88,7 +88,7 @@ extension PostgresStORM {
 	/// Performs a find on matching column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find([("username","joe")])` will find all rows that have a username equal to "joe"
-	public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor()) throws {
+  public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor()) throws {
 		let (idname, _) = firstAsKey()
 
 		var paramsString = [String]()
@@ -100,9 +100,9 @@ extension PostgresStORM {
 			paramsString += params
 
       if params.count > 1 {
-        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
       } else if params.count == 1 {
-        set.append("\(key.lowercased()) = \(subst)")
+        set.append("\(key) = \(subst)")
       }
 		}
 
@@ -125,9 +125,9 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
       } else if params.count == 1 {
-        set.append("\(key.lowercased()) = \(subst)")
+        set.append("\(key) = \(subst)")
       }
     }
 
@@ -155,9 +155,9 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
       } else if params.count == 1 {
-        set.append("\(key.lowercased()) = \(subst)")
+        set.append("\(key) = \(subst)")
       }
     }
 
@@ -180,9 +180,9 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key.lowercased()) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
       } else if params.count == 1 {
-        set.append("\(key.lowercased()) = \(subst)")
+        set.append("\(key) = \(subst)")
       }
     }
 

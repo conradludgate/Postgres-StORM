@@ -16,7 +16,7 @@ class User: PostgresStORM {
 	var lastname		: String? = ""
 	var email			: String = ""
   var optional: Double?
-  var stringarray: [String] = []
+  var stringArray: [String] = []
   var intarray: [Int] = []
   var json: [String:Any]?
   var jsonarray: [[String:Any]] = []
@@ -34,7 +34,7 @@ class User: PostgresStORM {
 		firstname		= this.data["firstname"] as? String ?? ""
 		lastname		= this.data["lastname"] as? String ?? ""
 		email			= this.data["email"] as? String ?? ""
-		stringarray		= this.data["stringarray"] as? [String] ?? []
+		stringArray		= this.data["stringArray"] as? [String] ?? []
     json = this.data["json"] as? [String:Any] ?? [:]
     jsonarray = this.data["jsonarray"] as? [[String:Any]] ?? []
     intarray = this.data["intarray"] as? [Int] ?? []
@@ -440,7 +440,7 @@ class PostgresStORMTests: XCTestCase {
 	============================================================================================= */
 	func testStringArray() {
 		let obj = User()
-		obj.stringarray = ["a", "b", "zee"]
+		obj.stringArray = ["a", "b", "zee"]
 
 		do {
 			try obj.save {id in obj.id = id as! Int }
@@ -458,7 +458,7 @@ class PostgresStORMTests: XCTestCase {
 			XCTFail(String(describing: error))
 		}
 		XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-		XCTAssert(obj.stringarray == obj2.stringarray, "Object not the same (stringarray)")
+		XCTAssert(obj.stringArray == obj2.stringArray, "Object not the same (stringArray)")
 	}
 
   func testIntArray() {
@@ -716,7 +716,7 @@ class PostgresStORMTests: XCTestCase {
 //    obj.lastname = "Ludgate"
 //    obj.email = "conrad@loop.party"
 //    obj.intarray = [2, 0, 1, 9]
-//    obj.stringarray = ["Conrad", "Joseph", "Ludgate"]
+//    obj.stringArray = ["Conrad", "Joseph", "Ludgate"]
 //    obj.json = ["Age": 20, "Height": 202]
 //    obj.jsonarray = [["Name": "Josh", "Age": 20], ["Name": "Mayhad", "Age": 26], ["Name": "Ali", "Age": 22]]
 //
@@ -729,7 +729,7 @@ class PostgresStORMTests: XCTestCase {
 //    let obj2 = User()
 //
 //    do {
-//      try obj2.update(["firstname": "Conrad", "lastname": "Ludgate"], set: ["firstname": "Pablo", "lastname": "Fatas"], pull: ["stringarray": ["Joseph", "Ludgate"]], push: ["jsonarray": ["Name": "Conrad", "Age": 20]], addToSet: ["intarray": [2, 0, 1, 8]])
+//      try obj2.update(["firstname": "Conrad", "lastname": "Ludgate"], set: ["firstname": "Pablo", "lastname": "Fatas"], pull: ["stringArray": ["Joseph", "Ludgate"]], push: ["jsonarray": ["Name": "Conrad", "Age": 20]], addToSet: ["intarray": [2, 0, 1, 8]])
 //    } catch {
 //      XCTFail(String(describing: error))
 //    }
@@ -742,7 +742,7 @@ class PostgresStORMTests: XCTestCase {
 //    XCTAssert(obj2.lastname == "Fatas", "Object not the same (lastname)")
 //    XCTAssert(obj2.email == "conrad@loop.party", "Object not the same (email)")
 //    XCTAssert(obj2.intarray.elementsEqual([2, 0, 1, 9, 8]), "Object not the same (intarray)")
-//    XCTAssert(obj2.stringarray.elementsEqual(["Conrad"]), "Object not the same (stringarray)")
+//    XCTAssert(obj2.stringArray.elementsEqual(["Conrad"]), "Object not the same (stringArray)")
 ////    XCTAssert((obj2.json! as NSDictionary).isEqual(json), "Object not the same (json)")
 //    XCTAssert(obj2.jsonarray.elementsEqual(jsonarray, by: { ($0 as NSDictionary).isEqual(to: $1) } ), "Object not the same (jsonarray)")
 //

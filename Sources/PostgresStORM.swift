@@ -42,7 +42,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// Defined as "open" as it is meant to be overridden by the child class.
 	open func table() -> String {
 		let m = Mirror(reflecting: self)
-		return ("\(m.subjectType)").lowercased()
+		return ("\(m.subjectType)")
 	}
 
 	/// Empty initializer
@@ -238,7 +238,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// Table Creation (alias for setup)
 
   public static func determineType(_ t: Any.Type, at: Int = 1) -> String {
-    if t == Int.self && at == 0 {
+    if (t == Int.self || t == Int?.self) && at == 0 {
       return "serial"
     } else if t == Int.self || t == Int?.self {
       return "int"
@@ -367,7 +367,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 				}
 				var verbage = ""
 				if !key.hasPrefix("internal_") && !key.hasPrefix("_") {
-					verbage = "\(key.lowercased()) "
+					verbage = "\"\(key)\" "
 
           verbage += PostgresStORM.determineType(type(of: child.value).self, at: opt.count)
 
@@ -385,6 +385,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 		}
 		do {
+      LogFile.debug("Create Statement: \(createStatement)", logFile: "./StORMlog.txt")
 			try sql(createStatement, params: [])
 		} catch {
 			LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
