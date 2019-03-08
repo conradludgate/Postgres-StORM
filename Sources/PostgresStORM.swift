@@ -33,6 +33,10 @@ public struct PostgresConnector {
 
 protocol CodableArray {}
 extension Array : CodableArray where Element: Codable {}
+protocol CodableOptional {}
+extension Optional : CodableOptional where Wrapped: Codable {}
+protocol CodableArrayOptional {}
+extension Optional : CodableArrayOptional where Wrapped: CodableArray {}
 
 /// SuperClass that inherits from the foundation "StORM" class.
 /// Provides PosgreSQL-specific ORM functionality to child classes
@@ -259,9 +263,9 @@ open class PostgresStORM: StORM, StORMProtocol {
       return "jsonb"
     } else if t == String.self || t == String?.self {
       return "text"
-    } else if t is CodableArray.Type {
+    } else if t is CodableArray.Type || t is CodableArrayOptional.Type {
       return "jsonb[]"
-    } else if t is Codable.Type {
+    } else if t is Codable.Type || t is CodableOptional.Type {
       return "jsonb"
     } else {
       return "text"

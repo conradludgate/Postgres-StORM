@@ -19,9 +19,9 @@ class User: PostgresStORM {
   var stringArray: [String]!
   var intarray: [Int] = []
   var Json: [String:Any]?
-  var jsonArray: [[String:Any]] = []
+  var jsonArray: [[String:Any]]!
   var struct_: Data?
-  var structarray: [Data] = []
+  var structarray: [Data]!
 
 	override open func table() -> String {
 		return "users_test1"
