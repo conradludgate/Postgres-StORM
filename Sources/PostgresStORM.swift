@@ -307,22 +307,22 @@ open class PostgresStORM: StORM, StORMProtocol {
       var params: [String] = []
       var substs: [String] = []
 
-      if t == [[String:Any]].self {
-        (v as! [[String:Any]]).forEach { json in
+      if t == [[String:Any]].self || t == [[String:Any]]?.self {
+        (v as? [[String:Any]]).map{ $0.forEach { json in
           if let jsonString = try? json.jsonEncodedString() {
             params.append(jsonString)
             i += 1
             substs.append("$\(i)::jsonb")
-          }
+          }}
         }
       } else {
         let encoder = JSONEncoder()
-        (v as! [Encodable]).forEach { json in
+        (v as? [Encodable]).map { $0.forEach { json in
           if let jsonString = try? json.string(using: encoder) {
             params.append(jsonString)
             i += 1
             substs.append("$\(i)::jsonb")
-          }
+          }}
         }
       }
 
