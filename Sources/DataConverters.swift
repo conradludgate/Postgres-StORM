@@ -33,6 +33,28 @@ extension PostgresStORM {
     text.removeFirst()
     text.removeLast()
 
-    return text.split(separator: ",").map{ trim(String($0)).toInt() ?? 0 }
+    return text.split(separator: ",").compactMap{ trim(String($0)).toInt() }
 	}
+  public func toArrayFloat(_ input: Any) -> [Float] {
+    var text = (input as? String ?? "{}")
+    if text.count < 2 {
+      return []
+    }
+
+    text.removeFirst()
+    text.removeLast()
+
+    return text.split(separator: ",").compactMap{ Float(trim(String($0))) }
+  }
+  public func toArrayDouble(_ input: Any) -> [Double] {
+    var text = (input as? String ?? "{}")
+    if text.count < 2 {
+      return []
+    }
+
+    text.removeFirst()
+    text.removeLast()
+
+    return text.split(separator: ",").compactMap{ Double(trim(String($0)))}
+  }
 }

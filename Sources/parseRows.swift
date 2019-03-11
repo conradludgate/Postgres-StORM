@@ -31,6 +31,15 @@ extension PostgresStORM {
 //        print(PostgresMap(Int(result.fieldType(index: f)!)))
 
 				switch PostgresMap(Int(result.fieldType(index: f)!)) {
+        case "float":
+          params[result.fieldName(index: f)!] = result.getFieldFloat(tupleIndex: x, fieldIndex: f)
+        case "float[]":
+          params[result.fieldName(index: f)!] = result.getFieldString(tupleIndex: x, fieldIndex: f).map{ toArrayFloat($0) }
+        case "float8":
+          params[result.fieldName(index: f)!] = result.getFieldDouble(tupleIndex: x, fieldIndex: f)
+        case "float8[]":
+          params[result.fieldName(index: f)!] = result.getFieldString(tupleIndex: x, fieldIndex: f).map{ toArrayDouble($0) }
+
 				case "Int":
 					params[result.fieldName(index: f)!] = result.getFieldInt(tupleIndex: x, fieldIndex: f)
         case "Int[]":
