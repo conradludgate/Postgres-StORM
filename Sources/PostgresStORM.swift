@@ -302,7 +302,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
       i += 1
 
-      return (param.map { [$0] } ?? [ "" ], "$\(i)::jsonb")
+      return (param.map { [$0] } ?? [ "{}" ], "$\(i)::jsonb")
     case "jsonb[]":
       var params: [String] = []
       var substs: [String] = []

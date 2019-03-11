@@ -23,9 +23,11 @@ extension Encodable {
 
 extension Decodable {
   public static func fromJson(_ json: Any?, using decoder: JSONDecoder = JSONDecoder()) -> Self? {
-    guard let jsonString = try? (json as? [String:Any] ?? [:]).jsonEncodedString() else {
+
+    guard let dict = (json as? [String:Any]), let jsonString = try? dict.jsonEncodedString() else {
       return nil
     }
+
     let jsonData = jsonString.data(using: .utf8)!
     return try? decoder.decode(Self.self, from: jsonData)
   }
