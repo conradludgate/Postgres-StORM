@@ -81,7 +81,7 @@ extension PostgresStORM {
 
     var i = 0
     params.enumerated().forEach { (index, param) in
-      let (params, subst) = PostgresStORM.convertInto(param, &i)
+      let (params, subst) = PostgresStORM.convertInto(param, &i, insert: true)
       if params.count > 0 {
         paramString += params
         substString.append(subst)

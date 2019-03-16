@@ -256,6 +256,8 @@ open class PostgresStORM: StORM, StORMProtocol {
       return "int[]"
     } else if t == Double.self || t == Double?.self {
       return "float8"
+    } else if t == [Double].self || t == [Double]?.self {
+      return "float8[]"
     } else if t == UInt.self || t == UInt8.self || t == UInt16.self || t == UInt32.self || t == UInt64.self ||
       t == UInt?.self || t == UInt8?.self || t == UInt16?.self || t == UInt32?.self || t == UInt64?.self{
       return "bytea"
@@ -272,7 +274,7 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  public static func convertInto(_ val: Any, _ i: inout Int) -> ([String], String) {
+  public static func convertInto(_ val: Any, _ i: inout Int, insert: Bool = false) -> ([String], String) {
     let v: Any
     if let ds = Mirror(reflecting: val).displayStyle {
       if case .optional = ds {
@@ -326,7 +328,7 @@ open class PostgresStORM: StORM, StORMProtocol {
         }
       }
 
-      if params.count == 1 {
+      if !insert && params.count == 1 {
         return (params, substs.first!)
       }
 
@@ -342,7 +344,7 @@ open class PostgresStORM: StORM, StORMProtocol {
         substs.append("$\(i)::\(subType)")
       }
 
-      if params.count == 1 {
+      if !insert && params.count == 1 {
         return (params, substs.first!)
       }
 

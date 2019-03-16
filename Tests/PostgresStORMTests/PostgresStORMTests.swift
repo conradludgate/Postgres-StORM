@@ -34,6 +34,7 @@ class User: PostgresStORM {
 		firstname		= this.data["firstname"] as? String ?? ""
 		lastName		= this.data["lastName"] as? String ?? ""
 		email			= this.data["email"] as? String ?? ""
+    optional = this.data["optional"] as? Double
 		stringArray		= this.data["stringArray"] as? [String] ?? []
     Json = this.data["Json"] as? [String:Any] ?? [:]
     jsonArray = this.data["jsonArray"] as? [[String:Any]] ?? []
@@ -68,9 +69,9 @@ class PostgresStORMTests: XCTestCase {
 
 		#else
 			PostgresConnector.host		= "localhost"
-			PostgresConnector.username	= "perfect"
-			PostgresConnector.password	= "perfect"
-			PostgresConnector.database	= "perfect_testing"
+			PostgresConnector.username	= "postgres"
+			PostgresConnector.password	= "foo"
+			PostgresConnector.database	= "postgres"
 			PostgresConnector.port		= 5432
 		#endif
 		let obj = User()
@@ -484,6 +485,30 @@ class PostgresStORMTests: XCTestCase {
     XCTAssert(obj.intarray == obj2.intarray, "Object not the same (intarray)")
   }
 
+  func testDouble() {
+    let obj = User()
+    obj.optional = 1500000000.0
+    
+
+    do {
+      try obj.save {id in obj.id = id as! Int }
+    } catch {
+      XCTFail(String(describing: error))
+    }
+
+    let obj2 = User()
+
+    do {
+      try obj2.get(obj.id)
+      try obj.delete()
+      try obj2.delete()
+    } catch {
+      XCTFail(String(describing: error))
+    }
+    XCTAssert(obj.id == obj2.id, "Object not the same (id)")
+    XCTAssert(obj.optional! == obj2.optional!, "Object not the same (json)")
+  }
+
   func testJson() {
     let obj = User()
     obj.Json = ["a": "b", "c": "zee"]
@@ -682,7 +707,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
-    XCTAssert([0, 2, 1].elementsEqual(obj2.intarray), "Object not the same (intarray)")
+    XCTAssert([0, 1, 2].elementsEqual(obj2.intarray.sorted()), "Object not the same (intarray)")
 
     do {
       try obj.pull(cols: ["intarray"], params: [1], idName: "id", idValue: obj.id)
