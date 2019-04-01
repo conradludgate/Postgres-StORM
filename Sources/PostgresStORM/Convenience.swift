@@ -102,7 +102,8 @@ extension PostgresStORM {
 			paramsString += params
 
       if params.count > 1 {
-        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        let unroll = subst.lastIndex(of: ":").map { end in subst[subst.index(subst.startIndex, offsetBy: 6)..<subst.index(end, offsetBy: -2)] } ?? "-1"
+        set.append("\(key) IN (\(unroll))")
       } else if params.count == 1 {
         set.append("\(key) = \(subst)")
       }
@@ -127,7 +128,8 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        let unroll = subst.lastIndex(of: ":").map { end in subst[subst.index(subst.startIndex, offsetBy: 6)..<subst.index(end, offsetBy: -2)] } ?? "-1"
+        set.append("\(key) IN (\(unroll))")
       } else if params.count == 1 {
         set.append("\(key) = \(subst)")
       }
@@ -157,7 +159,8 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        let unroll = subst.lastIndex(of: ":").map { end in subst[subst.index(subst.startIndex, offsetBy: 6)..<subst.index(end, offsetBy: -2)] } ?? "-1"
+        set.append("\(key) IN (\(unroll))")
       } else if params.count == 1 {
         set.append("\(key) = \(subst)")
       }
@@ -182,7 +185,8 @@ extension PostgresStORM {
       paramsString += params
 
       if params.count > 1 {
-        set.append("\(key) IN (\(subst[6..<subst.lastIndex(of: "]::")]))")
+        let unroll = subst.lastIndex(of: ":").map { end in subst[subst.index(subst.startIndex, offsetBy: 6)..<subst.index(end, offsetBy: -2)] } ?? "-1"
+        set.append("\(key) IN (\(unroll))")
       } else if params.count == 1 {
         set.append("\(key) = \(subst)")
       }

@@ -334,7 +334,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
       return (params, "ARRAY[\(substs.joined(separator: ","))]::jsonb[]")
     case "text[]", "int[]", "bytea[]", "float8[]":
-      let subType = type[0..<type.count-2]
+      let subType = type[type.startIndex..<type.index(type.endIndex, offsetBy: -2)]
       var params: [String] = []
       var substs: [String] = []
 

@@ -128,7 +128,8 @@ extension PostgresStORM {
       if params.count > 1 {
         substString.append("\"\(cols[index])\" = (select array_agg(elements) from (select unnest(\"\(cols[index])\") except select unnest(\(subst))) t (elements))")
       } else if params.count == 1 {
-        substString.append("\"\(cols[index])\" = (select array_agg(elements) from (select unnest(\"\(cols[index])\") except select unnest(ARRAY[\(subst)]\(subst[subst.lastIndex(of: "::")..<subst.count])[])) t (elements))")
+        let type = subst.lastIndex(of: ":").map { index in subst[subst.index(index, offsetBy: -1)..<subst.endIndex] } ?? "::text"
+        substString.append("\"\(cols[index])\" = (select array_agg(elements) from (select unnest(\"\(cols[index])\") except select unnest(ARRAY[\(subst)]\(type)[])) t (elements))")
       }
     }
 
