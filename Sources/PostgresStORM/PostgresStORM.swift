@@ -38,15 +38,29 @@ extension Optional : CodableOptional where Wrapped: Codable {}
 protocol CodableArrayOptional {}
 extension Optional : CodableArrayOptional where Wrapped: CodableArray {}
 
+
+
 /// SuperClass that inherits from the foundation "StORM" class.
 /// Provides PosgreSQL-specific ORM functionality to child classes
 open class PostgresStORM: StORM, StORMProtocol {
+  var table_name: String? = nil
 
 	/// Table that the child object relates to in the database.
 	/// Defined as "open" as it is meant to be overridden by the child class.
-	open func table() -> String {
-		let m = Mirror(reflecting: self)
-		return ("\(m.subjectType)")
+  open func table() -> String {
+    guard let table_name = self.table_name else {
+      let m = "\(Mirror(reflecting: self).subjectType)"
+
+      let pattern = "([a-z0-9])([A-Z])"
+
+      let regex = try! NSRegularExpression(pattern: pattern, options: [])
+      let range = NSRange(location: 0, length: m.count)
+      self.table_name = regex.stringByReplacingMatches(in: m, options: [], range: range, withTemplate: "$1_$2").lowercased() + "s"
+
+      return self.table_name!
+    }
+
+    return table_name
 	}
 
 	/// Empty initializer
@@ -92,27 +106,6 @@ open class PostgresStORM: StORM, StORMProtocol {
 	}
 
   override open func modifyValue(_ v: Any, forKey k: String) -> Any {
-//    if v is [String:Any] {
-//
-//      let jsonData = try? JSONSerialization.data(withJSONObject: v, options: [])
-//
-//      return String(data: jsonData!, encoding: .utf8)!
-//    } else if v is [[String:Any]] {
-//      let arrayVals: [String] = (v as! [[String:Any]]).map {
-//        let jsonData = try? JSONSerialization.data(withJSONObject: $0, options: [])
-//
-//        return "\(String(data: jsonData!, encoding: .utf8)!)::jsonb"
-//      }
-//
-//      return "ARRAY[\(arrayVals.joined(separator: ","))]"
-//
-//    } else if v is [Any] {
-//      let arrayVals: [String] = (v as! [Any]).map {"\(String(describing: $0))"}
-//
-//      return "ARRAY[\(arrayVals.joined(separator: ","))]"
-//    } else {
-//      return String(describing: v)
-//    }
     return v
   }
 
@@ -137,7 +130,6 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 		printDebug(statement, params)
 		let result = thisConnection.server.exec(statement: statement, params: params)
-//    LogFile.debug("\(result)", logFile: "./StORMlog.txt")
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
@@ -211,7 +203,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// On error can throw a StORMError error.
 
 	open func save(set: (_ id: Any)->Void) throws {
-    LogFile.debug("\(keyIsEmpty())", logFile: "./StORMlog.txt")
+    // LogFile.debug("\(keyIsEmpty())", logFile: "./StORMlog.txt")
 
     do {
 			if keyIsEmpty() {

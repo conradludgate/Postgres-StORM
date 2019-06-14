@@ -9,7 +9,7 @@ struct Data: Equatable, Codable {
   let bar: Int
 }
 
-class User: PostgresStORM {
+class UserTest: PostgresStORM {
 	// NOTE: First param in class should be the ID.
 	var id				: Int = 0
 	var firstname		: String = ""
@@ -23,9 +23,9 @@ class User: PostgresStORM {
   var struct_: Data?
   var structarray: [Data]!
 
-	override open func table() -> String {
-		return "users_test1"
-	}
+//  override open func table() -> String {
+//    return "users_test1"
+//  }
 
 	override func to(_ this: StORMRow) {
     let decoder = JSONDecoder()
@@ -43,10 +43,10 @@ class User: PostgresStORM {
     structarray = Data.fromJsonArray(this.data["structarray"], using: decoder)
 	}
 
-	func rows() -> [User] {
-		var rows = [User]()
+	func rows() -> [UserTest] {
+		var rows = [UserTest]()
 		for i in 0..<self.results.rows.count {
-			let row = User()
+			let row = UserTest()
 			row.to(self.results.rows[i])
 			rows.append(row)
 		}
@@ -74,8 +74,8 @@ class PostgresStORMTests: XCTestCase {
 			PostgresConnector.database	= "postgres"
 			PostgresConnector.port		= 5432
 		#endif
-		let obj = User()
-		try? obj.setup()
+		let obj = UserTest()
+		try! obj.setup()
 		StORMdebug = true
 	}
 
@@ -84,7 +84,7 @@ class PostgresStORMTests: XCTestCase {
 	============================================================================================= */
 	func testSaveNew() {
 
-		let obj = User()
+		let obj = UserTest()
 		obj.firstname = "X"
 		obj.lastName = "Y"
 
@@ -100,7 +100,7 @@ class PostgresStORMTests: XCTestCase {
 	Save - Update
 	============================================================================================= */
 	func testSaveUpdate() {
-		let obj = User()
+		let obj = UserTest()
 		obj.firstname = "X"
 		obj.lastName = "Y"
 
@@ -126,7 +126,7 @@ class PostgresStORMTests: XCTestCase {
 	============================================================================================= */
 	func testSaveCreate() {
 		// first clean up!
-		let deleting = User()
+		let deleting = UserTest()
 		do {
 			deleting.id			= 10001
 			try deleting.delete()
@@ -134,7 +134,7 @@ class PostgresStORMTests: XCTestCase {
 			XCTFail(String(describing: error))
 		}
 
-		let obj = User()
+		let obj = UserTest()
 
 		do {
 			obj.id			= 10001
@@ -152,7 +152,7 @@ class PostgresStORMTests: XCTestCase {
 	Get (with id)
 	============================================================================================= */
 	func testGetByPassingID() {
-		let obj = User()
+		let obj = UserTest()
 		obj.firstname = "X"
 		obj.lastName = "Y"
 
@@ -162,7 +162,7 @@ class PostgresStORMTests: XCTestCase {
 			XCTFail(String(describing: error))
 		}
 
-		let obj2 = User()
+		let obj2 = UserTest()
 
 		do {
 			try obj2.get(obj.id)
@@ -179,7 +179,7 @@ class PostgresStORMTests: XCTestCase {
 	Get (by id set)
 	============================================================================================= */
 	func testGetByID() {
-		let obj = User()
+		let obj = UserTest()
 		obj.firstname = "X"
 		obj.lastName = "Y"
 
@@ -189,7 +189,7 @@ class PostgresStORMTests: XCTestCase {
 			XCTFail(String(describing: error))
 		}
 
-		let obj2 = User()
+		let obj2 = UserTest()
 		obj2.id = obj.id
 		
 		do {
@@ -206,7 +206,7 @@ class PostgresStORMTests: XCTestCase {
 	Get (with id) - integer too large
 	============================================================================================= */
 	func testGetByPassingIDtooLarge() {
-		let obj = User()
+		let obj = UserTest()
 
 		do {
 			try obj.get(874682634789)
@@ -222,7 +222,7 @@ class PostgresStORMTests: XCTestCase {
 	// test get where id does not exist (id)
 	============================================================================================= */
 	func testGetByPassingIDnoRecord() {
-		let obj = User()
+		let obj = UserTest()
 
 		do {
 			try obj.get(1111111)
@@ -241,7 +241,7 @@ class PostgresStORMTests: XCTestCase {
 	// test get where id does not exist (id)
 	============================================================================================= */
 	func testGetBySettingIDnoRecord() {
-		let obj = User()
+		let obj = UserTest()
 		obj.id = 1111111
 		do {
 			try obj.get()
@@ -257,7 +257,7 @@ class PostgresStORMTests: XCTestCase {
 	// deleteSQL
 	============================================================================================= */
 	func testCheckDeleteSQL() {
-		let obj = User()
+		let obj = UserTest()
 		XCTAssert(obj.deleteSQL("test", idName: "testid") == "DELETE FROM test WHERE \"testid\" = $1", "DeleteSQL statement is not correct")
 
 	}
@@ -270,14 +270,14 @@ class PostgresStORMTests: XCTestCase {
 	func testFind() {
 		// Ensure table is empty
 		do {
-			let obj = User()
+			let obj = UserTest()
 			let tableName = obj.table()
 			_ = try? obj.sql("DELETE FROM \(tableName)", params: [])
 		}
 
 		// Doing a `find` with an empty table should yield zero results
 		do {
-			let obj = User()
+			let obj = UserTest()
 			do {
 				try obj.find([("\"lastName\"", "Ashpool")])
 				XCTAssertEqual(obj.results.rows.count, 0)
@@ -289,7 +289,7 @@ class PostgresStORMTests: XCTestCase {
 
 		// Insert more rows than the StORMCursor().limit
 		for i in 0..<200 {
-			let obj = User()
+			let obj = UserTest()
 			obj.firstname = "Tessier\(i)"
 			obj.lastName = "Ashpool"
 			do {
@@ -299,7 +299,7 @@ class PostgresStORMTests: XCTestCase {
 			}
 		}
 		for i in 0..<10 {
-			let obj = User()
+			let obj = UserTest()
 			obj.firstname = "Molly\(i)"
 			do {
 				try obj.save { id in obj.id = id as! Int }
@@ -309,7 +309,7 @@ class PostgresStORMTests: XCTestCase {
 		}
 
     do {
-      let obj = User()
+      let obj = UserTest()
       do {
         let count = try obj.findCount([("\"lastName\"", "Ashpool")])
         XCTAssertEqual(count, 200, "Object should have found the all the rows just inserted")
@@ -320,7 +320,7 @@ class PostgresStORMTests: XCTestCase {
 
 		// Doing the same `find` should now return rows
 		do {
-			let obj = User()
+			let obj = UserTest()
 			do {
 				try obj.find([("\"lastName\"", "Ashpool")])
 				let cursorLimit: Int = StORMCursor().limit
@@ -333,7 +333,7 @@ class PostgresStORMTests: XCTestCase {
 
 		// Doing the same `find` should now return rows limited by the provided cursor limit
 		do {
-			let obj = User()
+			let obj = UserTest()
 			do {
 				let cursor = StORMCursor(limit: 150, offset: 0)
 				try obj.find(["\"lastName\"": "Ashpool"], cursor: cursor)
@@ -348,7 +348,7 @@ class PostgresStORMTests: XCTestCase {
   func testFindIn() {
     // Ensure table is empty
     do {
-      let obj = User()
+      let obj = UserTest()
       let tableName = obj.table()
       _ = try? obj.sql("DELETE FROM \(tableName)", params: [])
     }
@@ -357,7 +357,7 @@ class PostgresStORMTests: XCTestCase {
 
     // Doing a `find` with an empty table should yield zero results
     do {
-      let obj = User()
+      let obj = UserTest()
       do {
         try obj.find([("firstname", data)])
         XCTAssertEqual(obj.results.rows.count, 0)
@@ -369,7 +369,7 @@ class PostgresStORMTests: XCTestCase {
 
     // Insert more rows than the StORMCursor().limit
     for i in 0..<200 {
-      let obj = User()
+      let obj = UserTest()
       obj.firstname = "Tessier\(i)"
       obj.lastName = "Ashpool"
       do {
@@ -379,7 +379,7 @@ class PostgresStORMTests: XCTestCase {
       }
     }
     for i in 0..<10 {
-      let obj = User()
+      let obj = UserTest()
       obj.firstname = "Molly\(i)"
       do {
         try obj.save { id in obj.id = id as! Int }
@@ -390,7 +390,7 @@ class PostgresStORMTests: XCTestCase {
 
     // Doing the same `find` should now return rows
     do {
-      let obj = User()
+      let obj = UserTest()
       do {
         try obj.find([("firstname", data)])
         XCTAssertEqual(obj.results.rows.count, 10, "Object should have found the all the rows just inserted. Limited by the default cursor limit.")
@@ -406,14 +406,14 @@ class PostgresStORMTests: XCTestCase {
 	func testFindAll() {
 		// Ensure table is empty
 		do {
-			let obj = User()
+			let obj = UserTest()
 			let tableName = obj.table()
 			_ = try? obj.sql("DELETE FROM \(tableName)", params: [])
 		}
 
 		// Insert more rows than the StORMCursor().limit
 		for i in 0..<200 {
-			let obj = User()
+			let obj = UserTest()
 			obj.firstname = "Wintermute\(i)"
 			do {
 				try obj.save { id in obj.id = id as! Int }
@@ -424,7 +424,7 @@ class PostgresStORMTests: XCTestCase {
 		
 		// Check that all the rows are returned
 		do {
-			let obj = User()
+			let obj = UserTest()
 			do {
 				try obj.findAll()
 				XCTAssertEqual(obj.results.rows.count, 200, "Object should have found the all the rows just inserted. Not limited by the default cursor limit.")
@@ -440,7 +440,7 @@ class PostgresStORMTests: XCTestCase {
 	Test array set & retrieve
 	============================================================================================= */
 	func testStringArray() {
-		let obj = User()
+		let obj = UserTest()
 		obj.stringArray = ["a", "b", "zee"]
 
 		do {
@@ -449,7 +449,7 @@ class PostgresStORMTests: XCTestCase {
 			XCTFail(String(describing: error))
 		}
 
-		let obj2 = User()
+		let obj2 = UserTest()
 
 		do {
 			try obj2.get(obj.id)
@@ -463,7 +463,7 @@ class PostgresStORMTests: XCTestCase {
 	}
 
   func testIntArray() {
-    let obj = User()
+    let obj = UserTest()
     obj.intarray = [3, 1, 2]
 
     do {
@@ -472,7 +472,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -486,7 +486,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testDouble() {
-    let obj = User()
+    let obj = UserTest()
     obj.optional = 1500000000.0
     
 
@@ -496,7 +496,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -510,7 +510,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testJson() {
-    let obj = User()
+    let obj = UserTest()
     obj.Json = ["a": "b", "c": "zee"]
 
     do {
@@ -519,7 +519,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -533,7 +533,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testJsonArray() {
-    let obj = User()
+    let obj = UserTest()
     obj.jsonArray = [["a": "b", "c": "zee"], ["foo": "bar", "one": "two"]]
 
     do {
@@ -542,7 +542,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -556,7 +556,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testStructArray() {
-    let obj = User()
+    let obj = UserTest()
     obj.structarray = [Data(foo: "Hello", bar: 1), Data(foo: "World", bar: 4)]
 
     do {
@@ -565,7 +565,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -579,7 +579,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testStruct() {
-    let obj = User()
+    let obj = UserTest()
     obj.struct_ = Data(foo: "Hello", bar: 1)
 
     do {
@@ -588,7 +588,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.get(obj.id)
@@ -604,12 +604,12 @@ class PostgresStORMTests: XCTestCase {
   func testSelectJson() {
     // Ensure table is empty
     do {
-      let obj = User()
+      let obj = UserTest()
       let tableName = obj.table()
       _ = try? obj.sql("DELETE FROM \(tableName)", params: [])
     }
 
-    let obj = User()
+    let obj = UserTest()
     obj.Json = ["foo": "Hello", "bar": 1]
 
     do {
@@ -618,7 +618,7 @@ class PostgresStORMTests: XCTestCase {
       XCTFail(String(describing: error))
     }
 
-    let obj2 = User()
+    let obj2 = UserTest()
 
     do {
       try obj2.find(["\"Json\"->>'foo'": "Hello"])
@@ -633,7 +633,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testPush() {
-    let obj = User()
+    let obj = UserTest()
     obj.intarray = [0, 4, 2, 6, 1]
 
     do {
@@ -650,7 +650,7 @@ class PostgresStORMTests: XCTestCase {
     print(obj.errorMsg)
     XCTAssert(obj.id > 0, "Object not saved (update)")
 
-    let obj2 = User()
+    let obj2 = UserTest()
     obj2.id = obj.id
 
     do {
@@ -681,7 +681,7 @@ class PostgresStORMTests: XCTestCase {
   }
 
   func testPull() {
-    let obj = User()
+    let obj = UserTest()
     obj.intarray = [0, 4, 2, 6, 1]
 
     do {
@@ -698,7 +698,7 @@ class PostgresStORMTests: XCTestCase {
     print(obj.errorMsg)
     XCTAssert(obj.id > 0, "Object not saved (update)")
 
-    let obj2 = User()
+    let obj2 = UserTest()
     obj2.id = obj.id
 
     do {
