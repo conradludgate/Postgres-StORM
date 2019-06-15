@@ -68,8 +68,16 @@ open class PostgresStORM: StORM, StORMProtocol {
 		super.init()
 	}
 
-	private func printDebug(_ statement: String, _ params: [String]) {
-		if StORMdebug { LogFile.debug("StORM Debug: \(statement) : \(params.joined(separator: ", "))", logFile: "./StORMlog.txt") }
+  private func printDebug(_ statement: String, _ type: String, _ params: [String] = []) {
+		if StORMdebug {
+      let ending: String
+      if params.count == 0 {
+        ending = ""
+      } else {
+        ending = " | \(params.joined(separator: ", "))"
+      }
+      LogFile.debug("\(type): \(statement)\(ending)", logFile: "./StORMlog.txt")
+    }
 	}
 
 	// Internal function which executes statements, with parameter binding
@@ -91,7 +99,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 		}
 		thisConnection.statement = statement
 
-		printDebug(statement, params)
+    printDebug(statement, "Execute")
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
@@ -128,7 +136,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 		}
 		thisConnection.statement = statement
 
-		printDebug(statement, params)
+    printDebug(statement, "Request Rows", params)
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
@@ -141,7 +149,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 		let resultRows = parseRows(result)
 
-    LogFile.debug("Response: \(resultRows.map{ "\($0.data)" }.joined(separator: ","))", logFile: "./StORMlog.txt")
+    printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response")
 		//		result.clear()
 		thisConnection.server.close()
 		return resultRows
@@ -387,11 +395,10 @@ open class PostgresStORM: StORM, StORMProtocol {
 			let keyComponent = ", CONSTRAINT \(table())_key PRIMARY KEY (\(keyName)) NOT DEFERRABLE INITIALLY IMMEDIATE"
 
 			createStatement = "CREATE TABLE IF NOT EXISTS \(table()) (\(opt.joined(separator: ", "))\(keyComponent));"
-			if StORMdebug { LogFile.info("createStatement: \(createStatement)", logFile: "./StORMlog.txt") }
+			if StORMdebug { LogFile.debug("Create Statement: \(createStatement)", logFile: "./StORMlog.txt") }
 
 		}
 		do {
-      LogFile.debug("Create Statement: \(createStatement)", logFile: "./StORMlog.txt")
 			try sql(createStatement, params: [])
 		} catch {
 			LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
