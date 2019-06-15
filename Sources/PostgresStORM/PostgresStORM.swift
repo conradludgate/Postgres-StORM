@@ -68,8 +68,12 @@ open class PostgresStORM: StORM, StORMProtocol {
 		super.init()
 	}
 
-  private func printDebug(_ statement: String, _ type: String, _ params: [String] = []) {
-		if StORMdebug {
+  private func printDebug(_ statement: String, _ type: String, _ params: [String] = [], forcePrint: Bool?) {
+    let output: Bool
+    if let forcePrint = forcePrint { output = forcePrint }
+    else { output = StORMdebug }
+
+		if output {
       let ending: String
       if params.count == 0 {
         ending = ""
@@ -80,10 +84,20 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
 	}
 
+  public func printInfo(_ statement: String, _ type: String, logFile: String, forcePrint: Bool? = nil) {
+    let output: Bool
+    if let forcePrint = forcePrint { output = forcePrint }
+    else { output = StORMdebug }
+
+    if output {
+      LogFile.info("\(type): \(statement)", logFile: "./StORMlog.txt")
+    }
+  }
+
 	// Internal function which executes statements, with parameter binding
 	// Returns raw result
 	@discardableResult
-	func exec(_ statement: String, params: [String]) throws -> PGResult {
+	func exec(_ statement: String, params: [String], forcePrint: Bool?) throws -> PGResult {
 		let thisConnection = PostgresConnect(
 			host:		PostgresConnector.host,
 			username:	PostgresConnector.username,
@@ -99,13 +113,13 @@ open class PostgresStORM: StORM, StORMProtocol {
 		}
 		thisConnection.statement = statement
 
-    printDebug(statement, "Execute")
+    printDebug(statement, "Execute", forcePrint: forcePrint)
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
 		if isError() {
-      if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
+      printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
@@ -120,7 +134,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	// Internal function which executes statements, with parameter binding
 	// Returns a processed row set
 	@discardableResult
-	func execRows(_ statement: String, params: [String]) throws -> [StORMRow] {
+	func execRows(_ statement: String, params: [String], forcePrint: Bool?) throws -> [StORMRow] {
 		let thisConnection = PostgresConnect(
 			host:		PostgresConnector.host,
 			username:	PostgresConnector.username,
@@ -136,20 +150,20 @@ open class PostgresStORM: StORM, StORMProtocol {
 		}
 		thisConnection.statement = statement
 
-    printDebug(statement, "Request Rows", params)
+    printDebug(statement, "Request Rows", params, forcePrint: forcePrint)
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
 		if isError() {
-      if StORMdebug { LogFile.info("Error msg: \(errorMsg)", logFile: "./StORMlog.txt") }
+      printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
 
 		let resultRows = parseRows(result)
 
-    printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response")
+    printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response", forcePrint: forcePrint)
 		//		result.clear()
 		thisConnection.server.close()
 		return resultRows
@@ -190,13 +204,13 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// If an ID has been defined, save() will perform an updae, otherwise a new document is created.
 	/// On error can throw a StORMError error.
 
-	open func save() throws {
+	open func save(forcePrint: Bool? = nil) throws {
 		do {
 			if keyIsEmpty() {
-				try insert(asData(1))
+				try insert(asData(1), forcePrint: forcePrint)
 			} else {
 				let (idname, idval) = firstAsKey()
-				try update(data: asData(1), idName: idname, idValue: idval)
+				try update(data: asData(1), idName: idname, idValue: idval, forcePrint: forcePrint)
 			}
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
@@ -210,16 +224,16 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// If an ID has been defined, save() will perform an updae, otherwise a new document is created.
 	/// On error can throw a StORMError error.
 
-	open func save(set: (_ id: Any)->Void) throws {
+	open func save(forcePrint: Bool? = nil, set: (_ id: Any)->Void) throws {
     // LogFile.debug("\(keyIsEmpty())", logFile: "./StORMlog.txt")
 
     do {
 			if keyIsEmpty() {
-				let setId = try insert(asData(1))
+				let setId = try insert(asData(1), forcePrint: forcePrint)
 				set(setId)
 			} else {
 				let (idname, idval) = firstAsKey()
-				try update(data: asData(1), idName: idname, idValue: idval)
+				try update(data: asData(1), idName: idname, idValue: idval, forcePrint: forcePrint)
 			}
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
@@ -229,9 +243,9 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 	/// Unlike the save() methods, create() mandates the addition of a new document, regardless of whether an ID has been set or specified.
 
-	override open func create() throws {
+  open func create(forcePrint: Bool? = nil) throws {
 		do {
-			try insert(asData())
+			try insert(asData(), forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw StORMError.error("\(error)")
@@ -365,11 +379,11 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-	open func setupTable(_ str: String = "") throws {
-		try setup(str)
+  open func setupTable(_ str: String = "", forcePrint: Bool? = nil) throws {
+    try setup(str, forcePrint: forcePrint)
 	}
 
-  open func setup(_ str: String = "") throws {
+  open func setup(_ str: String = "", forcePrint: Bool? = nil) throws {
 		LogFile.info("Running setup: \(table())", logFile: "./StORMlog.txt")
 		var createStatement = str
 		if str.count == 0 {
@@ -395,11 +409,11 @@ open class PostgresStORM: StORM, StORMProtocol {
 			let keyComponent = ", CONSTRAINT \(table())_key PRIMARY KEY (\(keyName)) NOT DEFERRABLE INITIALLY IMMEDIATE"
 
 			createStatement = "CREATE TABLE IF NOT EXISTS \(table()) (\(opt.joined(separator: ", "))\(keyComponent));"
-			if StORMdebug { LogFile.debug("Create Statement: \(createStatement)", logFile: "./StORMlog.txt") }
+      printDebug(createStatement, "Create Statement", forcePrint: forcePrint)
 
 		}
 		do {
-			try sql(createStatement, params: [])
+      try sql(createStatement, params: [], forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
 			throw StORMError.error("\(error)")

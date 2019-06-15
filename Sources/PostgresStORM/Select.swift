@@ -13,7 +13,7 @@ import PerfectLogger
 extension PostgresStORM {
 
 	/// Retrieves all rows in the table, only limited by the cursor (9,999,999 rows)
-	public func findAll() throws {
+  public func findAll(forcePrint: Bool? = nil) throws {
 		do {
 			let cursor = StORMCursor(limit: 9999999,offset: 0)
 			try select(
@@ -21,7 +21,8 @@ extension PostgresStORM {
 				whereclause: "true",
 				params: [],
 				orderby: [],
-				cursor: cursor
+        cursor: cursor,
+        forcePrint: forcePrint
 			)
 		} catch {
 			throw StORMError.error("\(error)")
@@ -29,7 +30,7 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves one rows in the table, sorted by order column
-	public func findOne(orderBy: String) throws {
+	public func findOne(orderBy: String, forcePrint: Bool? = nil) throws {
 		do {
 			let cursor = StORMCursor(limit: 1,offset: 0)
 			try select(
@@ -37,7 +38,8 @@ extension PostgresStORM {
 				whereclause: "true",
 				params: [],
 				orderby: [orderBy],
-				cursor: cursor
+				cursor: cursor,
+        forcePrint: forcePrint
 			)
 			makeRow()
 		} catch {
@@ -59,10 +61,19 @@ extension PostgresStORM {
 		cursor:			StORMCursor = StORMCursor(),
 		joins:			[StORMDataSourceJoin] = [],
 		having:			[String] = [],
-		groupBy:		[String] = []
+		groupBy:		[String] = [],
+    forcePrint: Bool? = nil
 		) throws {
 		do {
-			try select(columns: [], whereclause: whereclause, params: params, orderby: orderby, cursor: cursor, joins: joins, having: having, groupBy: groupBy)
+			try select(columns: [],
+                 whereclause: whereclause,
+                 params: params,
+                 orderby: orderby,
+                 cursor: cursor,
+                 joins: joins,
+                 having: having,
+                 groupBy: groupBy,
+                 forcePrint: forcePrint)
 		} catch {
 			throw StORMError.error("\(error)")
 		}
@@ -83,7 +94,8 @@ extension PostgresStORM {
 		cursor:			StORMCursor = StORMCursor(),
 		joins:			[StORMDataSourceJoin] = [],
 		having:			[String] = [],
-		groupBy:		[String] = []
+		groupBy:		[String] = [],
+    forcePrint: Bool? = nil
 		) throws {
 
 		let clauseCount = "COUNT(*) AS counter"
@@ -113,17 +125,25 @@ extension PostgresStORM {
 			clauseOrder = " ORDER BY \(colsjoined)"
 		}
 		do {
-			let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString)
-			var numrecords = 0
-			if (getCount.first != nil) {
-				numrecords = getCount.first?.data["counter"] as? Int ?? 0
-			}
-			results.cursorData = StORMCursor(
-				limit: cursor.limit,
-				offset: cursor.offset,
-				totalRecords: numrecords)
+      let numrecords: Int
+      if cursor.totalRecords > 0 {
+        numrecords = cursor.totalRecords
+      } else {
+        let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString, forcePrint: forcePrint)
 
-			if numrecords == 0 { return }
+        if let data = getCount.first {
+          numrecords = data.data["counter"] as? Int ?? 0
+        } else {
+          numrecords = 0
+        }
+      }
+
+      results.cursorData = StORMCursor(
+        limit: cursor.limit,
+        offset: cursor.offset + cursor.limit,
+        totalRecords: numrecords)
+
+			if cursor.offset >= numrecords { return }
 			// SELECT ASSEMBLE
 			var str = "SELECT \(clauseSelectList) FROM \(table()) \(clauseWhere) \(clauseOrder)"
 
@@ -137,7 +157,7 @@ extension PostgresStORM {
 			}
 
 			// save results into ResultSet
-			results.rows = try execRows(str, params: paramsString)
+			results.rows = try execRows(str, params: paramsString, forcePrint: forcePrint)
 
 			// if just one row returned, act like a "GET"
 			if results.cursorData.totalRecords == 1 { makeRow() }
@@ -155,7 +175,8 @@ extension PostgresStORM {
     params:      [Any],
     joins:      [StORMDataSourceJoin] = [],
     having:      [String] = [],
-    groupBy:    [String] = []
+    groupBy:    [String] = [],
+    forcePrint: Bool? = nil
     ) throws -> Int {
 
     let clauseCount = "COUNT(*) AS counter"
@@ -170,7 +191,7 @@ extension PostgresStORM {
       paramsString.append(String(describing: params[i]))
     }
     do {
-      let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString)
+      let getCount = try execRows("SELECT \(clauseCount) FROM \(table()) \(clauseWhere)", params: paramsString, forcePrint: forcePrint)
       var numrecords = 0
       if (getCount.first != nil) {
         numrecords = getCount.first?.data["counter"] as? Int ?? 0

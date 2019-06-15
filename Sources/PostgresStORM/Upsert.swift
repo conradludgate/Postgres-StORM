@@ -14,7 +14,7 @@ extension PostgresStORM {
 
 	/// Inserts the row with the specified data, on conflict (conflickkeys columns) it will perform an update.
 	/// Specify matching arrays of columns and parameters, and an array of conflict key columns.
-	public func upsert(cols: [String], params: [Any], conflictkeys: [String]) throws {
+  public func upsert(cols: [String], params: [Any], conflictkeys: [String], forcePrint: Bool? = nil) throws {
 
 		var paramsString = [String]()
 		var substString = [String]()
@@ -31,7 +31,7 @@ extension PostgresStORM {
 		let conflictcolsjoined = "\"" + conflictkeys.joined(separator: "\",\"") + "\""
 		let str = "INSERT INTO \(self.table()) (\(colsjoined)) VALUES(\(substString.joined(separator: ","))) ON CONFLICT (\(conflictcolsjoined))) DO UPDATE SET \(upsertString.joined(separator: ","))"
 		do {
-			try exec(str, params: paramsString)
+			try exec(str, params: paramsString, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error msg: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")

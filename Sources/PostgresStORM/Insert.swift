@@ -21,7 +21,7 @@ extension PostgresStORM {
 
 	/// Insert function where the suppled data is in [(String, Any)] format.
 	@discardableResult
-	public func insert(_ data: [(String, Any)]) throws -> Any {
+  public func insert(_ data: [(String, Any)], forcePrint: Bool? = nil) throws -> Any {
 
 		var keys = [String]()
 		var vals = [Any]()
@@ -30,7 +30,7 @@ extension PostgresStORM {
 			vals.append(i.1)
 		}
 		do {
-			return try insert(cols: keys, params: vals)
+			return try insert(cols: keys, params: vals, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw StORMError.error("\(error)")
@@ -38,7 +38,7 @@ extension PostgresStORM {
 	}
 
 	/// Insert function where the suppled data is in [String: Any] format.
-	public func insert(_ data: [String: Any]) throws -> Any {
+  public func insert(_ data: [String: Any], forcePrint: Bool? = nil) throws -> Any {
 
 		var keys = [String]()
 		var vals = [Any]()
@@ -48,7 +48,7 @@ extension PostgresStORM {
 		}
 
 		do {
-			return try insert(cols: keys, params: vals)
+			return try insert(cols: keys, params: vals, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw StORMError.error("\(error)")
@@ -57,10 +57,10 @@ extension PostgresStORM {
 	
 
 	/// Insert function where the suppled data is in matching arrays of columns and parameter values.
-	public func insert(cols: [String], params: [Any]) throws -> Any {
+  public func insert(cols: [String], params: [Any], forcePrint: Bool? = nil) throws -> Any {
 		let (idname, _) = firstAsKey()
 		do {
-			return try insert(cols: cols, params: params, idcolumn: idname)
+			return try insert(cols: cols, params: params, idcolumn: idname, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw StORMError.error("\(error)")
@@ -72,7 +72,7 @@ extension PostgresStORM {
   }
 
 	/// Insert function where the suppled data is in matching arrays of columns and parameter values, as well as specifying the name of the id column.
-	public func insert(cols: [String], params: [Any], idcolumn: String) throws -> Any {
+  public func insert(cols: [String], params: [Any], idcolumn: String, forcePrint: Bool? = nil) throws -> Any {
 
     var paramString = [String]()
     var substString = [String]()
@@ -95,7 +95,7 @@ extension PostgresStORM {
 		let str = "INSERT INTO \(self.table()) (\(colsjoined)) VALUES(\(substString.joined(separator: ","))) RETURNING \"\(idcolumn)\""
 
 		do {
-			let response = try exec(str, params: paramString)
+			let response = try exec(str, params: paramString, forcePrint: forcePrint)
 			return parseRows(response)[0].data[idcolumn]!
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")

@@ -42,10 +42,10 @@ extension PostgresStORM {
 
 	/// Deletes one row, with an id.
 	/// Presumes first property in class is the id.
-	public func delete() throws {
+	public func delete(forcePrint: Bool? = nil) throws {
 		let (idname, idval) = firstAsKey()
 		do {
-			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: idval)])
+			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: idval)], forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")
@@ -54,10 +54,10 @@ extension PostgresStORM {
 	}
 
 	/// Deletes one row, with the id as set.
-	public func delete(_ id: Any) throws {
+	public func delete(_ id: Any, forcePrint: Bool? = nil) throws {
 		let (idname, _) = firstAsKey()
 		do {
-			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: id)])
+			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: id)], forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			self.error = StORMError.error("\(error)")
@@ -66,10 +66,10 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves a single row with the supplied ID.
-	public func get(_ id: Any) throws {
+	public func get(_ id: Any, forcePrint: Bool? = nil) throws {
 		let (idname, _) = firstAsKey()
 		do {
-			try select(whereclause: "\"\(idname)\" = $1", params: [id], orderby: [])
+			try select(whereclause: "\"\(idname)\" = $1", params: [id], orderby: [], forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -77,10 +77,10 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves a single row with the ID as set.
-	public func get() throws {
+	public func get(forcePrint: Bool? = nil) throws {
 		let (idname, idval) = firstAsKey()
 		do {
-			try select(whereclause: "\"\(idname)\" = $1", params: ["\(idval)"], orderby: [])
+			try select(whereclause: "\"\(idname)\" = $1", params: ["\(idval)"], orderby: [], forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -90,7 +90,7 @@ extension PostgresStORM {
 	/// Performs a find on matching column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find([("username","joe")])` will find all rows that have a username equal to "joe"
-  public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor()) throws {
+  public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor(), forcePrint: Bool? = nil) throws {
 		let (idname, _) = firstAsKey()
 
 		var paramsString = [String]()
@@ -110,7 +110,7 @@ extension PostgresStORM {
 		}
 
 		do {
-			try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: [idname], cursor: cursor)
+			try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: [idname], cursor: cursor, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -118,7 +118,7 @@ extension PostgresStORM {
 
 	}
 
-  public func findCount(_ data: [(String, Any)]) throws -> Int {
+  public func findCount(_ data: [(String, Any)], forcePrint: Bool? = nil) throws -> Int {
     var paramsString = [String]()
     var set = [String]()
     var i = 0
@@ -136,7 +136,7 @@ extension PostgresStORM {
     }
 
     do {
-      return try count(whereclause: set.joined(separator: " AND "), params: paramsString)
+      return try count(whereclause: set.joined(separator: " AND "), params: paramsString, forcePrint: forcePrint)
     } catch {
       LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
       throw error
@@ -147,7 +147,7 @@ extension PostgresStORM {
 	/// Performs a find on mathing column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find(["username": "joe"])` will find all rows that have a username equal to "joe"
-	public func find(_ data: [String: Any], cursor: StORMCursor = StORMCursor()) throws {
+  public func find(_ data: [String: Any], cursor: StORMCursor = StORMCursor(), forcePrint: Bool? = nil) throws {
 		let (idname, _) = firstAsKey()
 
 		var paramsString = [String]()
@@ -167,7 +167,7 @@ extension PostgresStORM {
     }
 
 		do {
-			try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: [idname], cursor: cursor)
+      try select(whereclause: set.joined(separator: " AND "), params: paramsString, orderby: [idname], cursor: cursor, forcePrint: forcePrint)
 		} catch {
 			LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
 			throw error
@@ -175,7 +175,7 @@ extension PostgresStORM {
 
 	}
 
-  public func findCount(_ data: [String:Any]) throws -> Int {
+  public func findCount(_ data: [String:Any], forcePrint: Bool? = nil) throws -> Int {
     var paramsString = [String]()
     var set = [String]()
     var i = 0
@@ -193,7 +193,7 @@ extension PostgresStORM {
     }
 
     do {
-      return try count(whereclause: set.joined(separator: " AND "), params: paramsString)
+      return try count(whereclause: set.joined(separator: " AND "), params: paramsString, forcePrint: forcePrint)
     } catch {
       LogFile.error("Error: \(error)", logFile: "./StORMlog.txt")
       throw error

@@ -23,10 +23,6 @@ class UserTest: PostgresStORM {
   var struct_: Data?
   var structarray: [Data]!
 
-//  override open func table() -> String {
-//    return "users_test1"
-//  }
-
 	override func to(_ this: StORMRow) {
     let decoder = JSONDecoder()
 
@@ -89,7 +85,7 @@ class PostgresStORMTests: XCTestCase {
 		obj.lastName = "Y"
 
 		do {
-			try obj.save {id in obj.id = id as! Int }
+			try obj.save { id in obj.id = id as! Int }
 		} catch {
 			XCTFail(String(describing: error))
 		}
@@ -105,7 +101,7 @@ class PostgresStORMTests: XCTestCase {
 		obj.lastName = "Y"
 
 		do {
-			try obj.save {id in obj.id = id as! Int }
+			try obj.save { id in obj.id = id as! Int }
 		} catch {
 			XCTFail(String(describing: error))
 		}
@@ -157,7 +153,7 @@ class PostgresStORMTests: XCTestCase {
 		obj.lastName = "Y"
 
 		do {
-			try obj.save {id in obj.id = id as! Int }
+			try obj.save { id in obj.id = id as! Int }
 		} catch {
 			XCTFail(String(describing: error))
 		}
@@ -184,7 +180,7 @@ class PostgresStORMTests: XCTestCase {
 		obj.lastName = "Y"
 
 		do {
-			try obj.save {id in obj.id = id as! Int }
+			try obj.save { id in obj.id = id as! Int }
 		} catch {
 			XCTFail(String(describing: error))
 		}
@@ -444,7 +440,7 @@ class PostgresStORMTests: XCTestCase {
 		obj.stringArray = ["a", "b", "zee"]
 
 		do {
-			try obj.save {id in obj.id = id as! Int }
+			try obj.save { id in obj.id = id as! Int }
 		} catch {
 			XCTFail(String(describing: error))
 		}
@@ -467,7 +463,7 @@ class PostgresStORMTests: XCTestCase {
     obj.intarray = [3, 1, 2]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -491,7 +487,7 @@ class PostgresStORMTests: XCTestCase {
     
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -514,7 +510,7 @@ class PostgresStORMTests: XCTestCase {
     obj.Json = ["a": "b", "c": "zee"]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -537,7 +533,7 @@ class PostgresStORMTests: XCTestCase {
     obj.jsonArray = [["a": "b", "c": "zee"], ["foo": "bar", "one": "two"]]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -560,7 +556,7 @@ class PostgresStORMTests: XCTestCase {
     obj.structarray = [Data(foo: "Hello", bar: 1), Data(foo: "World", bar: 4)]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -583,7 +579,7 @@ class PostgresStORMTests: XCTestCase {
     obj.struct_ = Data(foo: "Hello", bar: 1)
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -613,7 +609,7 @@ class PostgresStORMTests: XCTestCase {
     obj.Json = ["foo": "Hello", "bar": 1]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -637,7 +633,7 @@ class PostgresStORMTests: XCTestCase {
     obj.intarray = [0, 4, 2, 6, 1]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -685,7 +681,7 @@ class PostgresStORMTests: XCTestCase {
     obj.intarray = [0, 4, 2, 6, 1]
 
     do {
-      try obj.save {id in obj.id = id as! Int }
+      try obj.save { id in obj.id = id as! Int }
     } catch {
       XCTFail(String(describing: error))
     }
@@ -727,52 +723,6 @@ class PostgresStORMTests: XCTestCase {
     XCTAssert(obj.id == obj2.id, "Object not the same (id)")
     XCTAssert([0, 2].elementsEqual(obj2.intarray), "Object not the same (intarray)")
   }
-
-//  func testMassiveUpdate() {
-//    // Ensure table is empty
-//    do {
-//      let obj = User()
-//      let tableName = obj.table()
-//      _ = try? obj.sql("DELETE FROM \(tableName)", params: [])
-//    }
-//
-//    let obj = User()
-//    obj.firstname = "Conrad"
-//    obj.lastname = "Ludgate"
-//    obj.email = "conrad@loop.party"
-//    obj.intarray = [2, 0, 1, 9]
-//    obj.stringArray = ["Conrad", "Joseph", "Ludgate"]
-//    obj.json = ["Age": 20, "Height": 202]
-//    obj.jsonarray = [["Name": "Josh", "Age": 20], ["Name": "Mayhad", "Age": 26], ["Name": "Ali", "Age": 22]]
-//
-//    do {
-//      try obj.save {id in obj.id = id as! Int }
-//    } catch {
-//      XCTFail(String(describing: error))
-//    }
-//
-//    let obj2 = User()
-//
-//    do {
-//      try obj2.update(["firstname": "Conrad", "lastname": "Ludgate"], set: ["firstname": "Pablo", "lastname": "Fatas"], pull: ["stringArray": ["Joseph", "Ludgate"]], push: ["jsonarray": ["Name": "Conrad", "Age": 20]], addToSet: ["intarray": [2, 0, 1, 8]])
-//    } catch {
-//      XCTFail(String(describing: error))
-//    }
-//
-//    let json = ["Age": 20, "Height": 202]
-//    let jsonarray = [["Name": "Josh", "Age": 20], ["Name": "Mayhad", "Age": 26], ["Name": "Ali", "Age": 22], ["Name": "Conrad", "Age": 20]]
-//
-//    XCTAssert(obj2.id == obj.id, "Object not the same (id)")
-//    XCTAssert(obj2.firstname == "Pablo", "Object not the same (firstname)")
-//    XCTAssert(obj2.lastname == "Fatas", "Object not the same (lastname)")
-//    XCTAssert(obj2.email == "conrad@loop.party", "Object not the same (email)")
-//    XCTAssert(obj2.intarray.elementsEqual([2, 0, 1, 9, 8]), "Object not the same (intarray)")
-//    XCTAssert(obj2.stringArray.elementsEqual(["Conrad"]), "Object not the same (stringArray)")
-////    XCTAssert((obj2.json! as NSDictionary).isEqual(json), "Object not the same (json)")
-//    XCTAssert(obj2.jsonarray.elementsEqual(jsonarray, by: { ($0 as NSDictionary).isEqual(to: $1) } ), "Object not the same (jsonarray)")
-//
-//    print(obj.rows())
-//  }
 
     /* =============================================================================================
      parseRows (JSON Aggregation)
