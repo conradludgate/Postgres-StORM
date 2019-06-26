@@ -110,7 +110,8 @@ extension PostgresStORM {
 			for i in cols() {
 				keys.append(i.0)
 			}
-			clauseSelectList = keys.joined(separator: ",")
+      let t = "\"\(table())\"."
+			clauseSelectList = "\(t)\""+keys.joined(separator: "\",\(t)\"")+"\""
 		}
 		if whereclause.count > 0 {
 			clauseWhere = " WHERE \(whereclause)"
