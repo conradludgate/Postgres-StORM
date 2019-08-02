@@ -68,7 +68,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 		super.init()
 	}
 
-  private func printDebug(_ statement: String, _ type: String, _ params: [String] = [], forcePrint: Bool?) {
+  private static func printDebug(_ statement: String, _ type: String, _ params: [String] = [], forcePrint: Bool?) {
     let output: Bool
     if let forcePrint = forcePrint { output = forcePrint }
     else { output = StORMdebug }
@@ -84,7 +84,7 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
 	}
 
-  public func printInfo(_ statement: String, _ type: String, logFile: String, forcePrint: Bool? = nil) {
+  public static func printInfo(_ statement: String, _ type: String, logFile: String, forcePrint: Bool? = nil) {
     let output: Bool
     if let forcePrint = forcePrint { output = forcePrint }
     else { output = StORMdebug }
@@ -106,20 +106,20 @@ open class PostgresStORM: StORM, StORMProtocol {
 			port:		PostgresConnector.port
 		)
 
-		thisConnection.open()
+		thisConnection.open(forcePrint: forcePrint)
 		if thisConnection.state == .bad {
 			error = .connectionError
 			throw StORMError.error("Connection Error")
 		}
 		thisConnection.statement = statement
 
-    printDebug(statement, "Execute", forcePrint: forcePrint)
+    PostgresStORM.printDebug(statement, "Execute", forcePrint: forcePrint)
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
 		if isError() {
-      printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
+      PostgresStORM.printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
@@ -143,27 +143,27 @@ open class PostgresStORM: StORM, StORMProtocol {
 			port:		PostgresConnector.port
 		)
 
-		thisConnection.open()
+		thisConnection.open(forcePrint: forcePrint)
 		if thisConnection.state == .bad {
 			error = .connectionError
 			throw StORMError.error("Connection Error")
 		}
 		thisConnection.statement = statement
 
-    printDebug(statement, "Request Rows", params, forcePrint: forcePrint)
+    PostgresStORM.printDebug(statement, "Request Rows", params, forcePrint: forcePrint)
 		let result = thisConnection.server.exec(statement: statement, params: params)
 
 		// set exec message
 		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
 		if isError() {
-      printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
+      PostgresStORM.printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
 			thisConnection.server.close()
 			throw StORMError.error(errorMsg)
 		}
 
 		let resultRows = parseRows(result)
 
-    printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response", forcePrint: forcePrint)
+    PostgresStORM.printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response", forcePrint: forcePrint)
 		//		result.clear()
 		thisConnection.server.close()
 		return resultRows
@@ -409,7 +409,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 			let keyComponent = ", CONSTRAINT \(table())_key PRIMARY KEY (\(keyName)) NOT DEFERRABLE INITIALLY IMMEDIATE"
 
 			createStatement = "CREATE TABLE IF NOT EXISTS \(table()) (\(opt.joined(separator: ", "))\(keyComponent));"
-      printDebug(createStatement, "Create Statement", forcePrint: forcePrint)
+      PostgresStORM.printDebug(createStatement, "Create Statement", forcePrint: forcePrint)
 
 		}
 		do {

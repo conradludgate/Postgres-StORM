@@ -50,14 +50,14 @@ open class PostgresConnect: StORMConnect {
 
 	/// Opens the connection
 	/// If StORMdebug is true, the connection state will be output to console and to ./StORMlog.txt
-	public func open() {
+  public func open(forcePrint: Bool?) {
 		let status = server.connectdb(self.connectionString())
 		if status != .ok {
 			state = .bad
 			resultCode = .error("\(server.errorMessage())")
 			LogFile.error("Postgres conn error: \(server.errorMessage())", logFile: "./StORMlog.txt")
 		} else {
-			if StORMdebug { LogFile.info("Postgres conn state: ok", logFile: "./StORMlog.txt") }
+			PostgresStORM.printInfo("Postgres conn state: ok", "Conn", logFile: "./StORMlog.txt", forcePrint: forcePrint)
 			resultCode = .noError
 		}
 	}
