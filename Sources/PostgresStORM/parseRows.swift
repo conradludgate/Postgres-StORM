@@ -91,14 +91,11 @@ extension PostgresStORM {
             text = "[\(text)]"
             do {
               let decode = try text.jsonDecode()
-              print(decode)
               return decode as? [[String:Any]] ?? []
             } catch {
               return []
             }
           }
-
-          print(output)
 
           params[result.fieldName(index: f)!] = output
 
