@@ -13,7 +13,7 @@ import PerfectLogger
 extension PostgresStORM {
 
 	/// Retrieves all rows in the table, only limited by the cursor (9,999,999 rows)
-  public func findAll(forcePrint: Bool? = nil) throws {
+  public func findAll(forcePrint: Bool?) throws {
 		do {
 			let cursor = StORMCursor(limit: 9999999,offset: 0)
 			try select(
@@ -30,7 +30,7 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves one rows in the table, sorted by order column
-	public func findOne(orderBy: String, forcePrint: Bool? = nil) throws {
+	public func findOne(orderBy: String, forcePrint: Bool?) throws {
 		do {
 			let cursor = StORMCursor(limit: 1,offset: 0)
 			try select(
@@ -62,7 +62,7 @@ extension PostgresStORM {
 		joins:			[StORMDataSourceJoin] = [],
 		having:			[String] = [],
 		groupBy:		[String] = [],
-    forcePrint: Bool? = nil
+    forcePrint: Bool?
 		) throws {
 		do {
 			try select(columns: [],
@@ -95,7 +95,7 @@ extension PostgresStORM {
 		joins:			[StORMDataSourceJoin] = [],
 		having:			[String] = [],
 		groupBy:		[String] = [],
-    forcePrint: Bool? = nil
+    forcePrint: Bool?
 		) throws {
 
 		let clauseCount = "COUNT(*) AS counter"
@@ -177,7 +177,7 @@ extension PostgresStORM {
     joins:      [StORMDataSourceJoin] = [],
     having:      [String] = [],
     groupBy:    [String] = [],
-    forcePrint: Bool? = nil
+    forcePrint: Bool?
     ) throws -> Int {
 
     let clauseCount = "COUNT(*) AS counter"

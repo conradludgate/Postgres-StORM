@@ -17,7 +17,7 @@ extension PostgresStORM {
 	/// This is an alternative to the save() function.
 	/// Specify matching arrays of columns and parameters, as well as the id name and value.
 	@discardableResult
-  public func update(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+  public func update(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool?) throws -> Bool {
     var paramString = [String]()
     var substString = [String]()
 
@@ -49,7 +49,7 @@ extension PostgresStORM {
 	/// This is an alternative to the save() function.
 	/// Specify a [(String, Any)] of columns and parameters, as well as the id name and value.
 	@discardableResult
-	public func update(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+	public func update(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool?) throws -> Bool {
 
 		var keys = [String]()
 		var vals = [Any]()
@@ -66,7 +66,7 @@ extension PostgresStORM {
 	}
 
   @discardableResult
-  public func push(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+  public func push(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool?) throws -> Bool {
     var paramString = [String]()
     var substString = [String]()
 
@@ -98,7 +98,7 @@ extension PostgresStORM {
   }
 
   @discardableResult
-  public func push(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+  public func push(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool?) throws -> Bool {
 
     var keys = [String]()
     var vals = [Any]()
@@ -116,7 +116,7 @@ extension PostgresStORM {
 
 
   @discardableResult
-  public func pull(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+  public func pull(cols: [String], params: [Any], idName: String, idValue: Any, forcePrint: Bool?) throws -> Bool {
     var paramString = [String]()
     var substString = [String]()
 
@@ -149,7 +149,7 @@ extension PostgresStORM {
   }
 
   @discardableResult
-  public func pull(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool? = nil) throws -> Bool {
+  public func pull(data: [(String, Any)], idName: String = "id", idValue: Any, forcePrint: Bool?) throws -> Bool {
 
     var keys = [String]()
     var vals = [Any]()

@@ -21,7 +21,7 @@ extension PostgresStORM {
 
 	/// Insert function where the suppled data is in [(String, Any)] format.
 	@discardableResult
-  public func insert(_ data: [(String, Any)], forcePrint: Bool? = nil) throws -> Any {
+  public func insert(_ data: [(String, Any)], forcePrint: Bool?) throws -> Any {
 
 		var keys = [String]()
 		var vals = [Any]()
@@ -38,7 +38,7 @@ extension PostgresStORM {
 	}
 
 	/// Insert function where the suppled data is in [String: Any] format.
-  public func insert(_ data: [String: Any], forcePrint: Bool? = nil) throws -> Any {
+  public func insert(_ data: [String: Any], forcePrint: Bool?) throws -> Any {
 
 		var keys = [String]()
 		var vals = [Any]()
@@ -57,7 +57,7 @@ extension PostgresStORM {
 	
 
 	/// Insert function where the suppled data is in matching arrays of columns and parameter values.
-  public func insert(cols: [String], params: [Any], forcePrint: Bool? = nil) throws -> Any {
+  public func insert(cols: [String], params: [Any], forcePrint: Bool?) throws -> Any {
 		let (idname, _) = firstAsKey()
 		do {
 			return try insert(cols: cols, params: params, idcolumn: idname, forcePrint: forcePrint)
@@ -72,7 +72,7 @@ extension PostgresStORM {
   }
 
 	/// Insert function where the suppled data is in matching arrays of columns and parameter values, as well as specifying the name of the id column.
-  public func insert(cols: [String], params: [Any], idcolumn: String, forcePrint: Bool? = nil) throws -> Any {
+  public func insert(cols: [String], params: [Any], idcolumn: String, forcePrint: Bool?) throws -> Any {
 
     var paramString = [String]()
     var substString = [String]()

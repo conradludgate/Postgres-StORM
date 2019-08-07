@@ -42,7 +42,7 @@ extension PostgresStORM {
 
 	/// Deletes one row, with an id.
 	/// Presumes first property in class is the id.
-	public func delete(forcePrint: Bool? = nil) throws {
+	public func delete(forcePrint: Bool?) throws {
 		let (idname, idval) = firstAsKey()
 		do {
 			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: idval)], forcePrint: forcePrint)
@@ -54,7 +54,7 @@ extension PostgresStORM {
 	}
 
 	/// Deletes one row, with the id as set.
-	public func delete(_ id: Any, forcePrint: Bool? = nil) throws {
+	public func delete(_ id: Any, forcePrint: Bool?) throws {
 		let (idname, _) = firstAsKey()
 		do {
 			try exec(deleteSQL(self.table(), idName: idname), params: [String(describing: id)], forcePrint: forcePrint)
@@ -66,7 +66,7 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves a single row with the supplied ID.
-	public func get(_ id: Any, forcePrint: Bool? = nil) throws {
+	public func get(_ id: Any, forcePrint: Bool?) throws {
 		let (idname, _) = firstAsKey()
 		do {
 			try select(whereclause: "\"\(idname)\" = $1", params: [id], orderby: [], forcePrint: forcePrint)
@@ -77,7 +77,7 @@ extension PostgresStORM {
 	}
 
 	/// Retrieves a single row with the ID as set.
-	public func get(forcePrint: Bool? = nil) throws {
+	public func get(forcePrint: Bool?) throws {
 		let (idname, idval) = firstAsKey()
 		do {
 			try select(whereclause: "\"\(idname)\" = $1", params: ["\(idval)"], orderby: [], forcePrint: forcePrint)
@@ -90,7 +90,7 @@ extension PostgresStORM {
 	/// Performs a find on matching column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find([("username","joe")])` will find all rows that have a username equal to "joe"
-  public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor(), forcePrint: Bool? = nil) throws {
+  public func find(_ data: [(String, Any)], cursor: StORMCursor = StORMCursor(), forcePrint: Bool?) throws {
 		let (idname, _) = firstAsKey()
 
 		var paramsString = [String]()
@@ -118,7 +118,7 @@ extension PostgresStORM {
 
 	}
 
-  public func findCount(_ data: [(String, Any)], forcePrint: Bool? = nil) throws -> Int {
+  public func findCount(_ data: [(String, Any)], forcePrint: Bool?) throws -> Int {
     var paramsString = [String]()
     var set = [String]()
     var i = 0
@@ -147,7 +147,7 @@ extension PostgresStORM {
 	/// Performs a find on mathing column name/value pairs.
 	/// An optional `cursor:StORMCursor` object can be supplied to determine pagination through a larger result set.
 	/// For example, `try find(["username": "joe"])` will find all rows that have a username equal to "joe"
-  public func find(_ data: [String: Any], cursor: StORMCursor = StORMCursor(), forcePrint: Bool? = nil) throws {
+  public func find(_ data: [String: Any], cursor: StORMCursor = StORMCursor(), forcePrint: Bool?) throws {
 		let (idname, _) = firstAsKey()
 
 		var paramsString = [String]()
@@ -175,7 +175,7 @@ extension PostgresStORM {
 
 	}
 
-  public func findCount(_ data: [String:Any], forcePrint: Bool? = nil) throws -> Int {
+  public func findCount(_ data: [String:Any], forcePrint: Bool?) throws -> Int {
     var paramsString = [String]()
     var set = [String]()
     var i = 0

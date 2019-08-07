@@ -84,7 +84,7 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
 	}
 
-  public static func printInfo(_ statement: String, _ type: String, logFile: String, forcePrint: Bool? = nil) {
+  public static func printInfo(_ statement: String, _ type: String, logFile: String, forcePrint: Bool?) {
     let output: Bool
     if let forcePrint = forcePrint { output = forcePrint }
     else { output = StORMdebug }
@@ -204,7 +204,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// If an ID has been defined, save() will perform an updae, otherwise a new document is created.
 	/// On error can throw a StORMError error.
 
-	open func save(forcePrint: Bool? = nil) throws {
+	open func save(forcePrint: Bool?) throws {
 		do {
 			if keyIsEmpty() {
 				try insert(asData(1), forcePrint: forcePrint)
@@ -224,7 +224,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 	/// If an ID has been defined, save() will perform an updae, otherwise a new document is created.
 	/// On error can throw a StORMError error.
 
-	open func save(forcePrint: Bool? = nil, set: (_ id: Any)->Void) throws {
+	open func save(forcePrint: Bool?, set: (_ id: Any)->Void) throws {
     // LogFile.debug("\(keyIsEmpty())", logFile: "./StORMlog.txt")
 
     do {
@@ -243,7 +243,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
 	/// Unlike the save() methods, create() mandates the addition of a new document, regardless of whether an ID has been set or specified.
 
-  open func create(forcePrint: Bool? = nil) throws {
+  open func create(forcePrint: Bool?) throws {
 		do {
 			try insert(asData(), forcePrint: forcePrint)
 		} catch {
@@ -379,11 +379,11 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  open func setupTable(_ str: String = "", forcePrint: Bool? = nil) throws {
+  open func setupTable(_ str: String = "", forcePrint: Bool?) throws {
     try setup(str, forcePrint: forcePrint)
 	}
 
-  open func setup(_ str: String = "", forcePrint: Bool? = nil) throws {
+  open func setup(_ str: String = "", forcePrint: Bool?) throws {
 		LogFile.info("Running setup: \(table())", logFile: "./StORMlog.txt")
 		var createStatement = str
 		if str.count == 0 {
