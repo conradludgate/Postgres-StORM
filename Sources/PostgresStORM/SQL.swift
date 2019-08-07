@@ -16,7 +16,7 @@ extension PostgresStORM {
 	/// Execute Raw SQL (with parameter binding)
 	/// Returns PGResult (discardable)
 	@discardableResult
-  public func sql(_ statement: String, params: [String], forcePrint: Bool?) throws -> PGResult {
+  public func sql(_ statement: String, params: [String], forcePrint: Bool? = nil) throws -> PGResult {
 		do {
 			return try exec(statement, params: params, forcePrint: forcePrint)
 		} catch {

@@ -386,11 +386,11 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
   }
 
-  open func setupTable(_ str: String = "", forcePrint: Bool?) throws {
+  open func setupTable(_ str: String = "", forcePrint: Bool? = nil) throws {
     try setup(str, forcePrint: forcePrint)
 	}
 
-  open func setup(_ str: String = "", forcePrint: Bool?) throws {
+  open func setup(_ str: String = "", forcePrint: Bool? = nil) throws {
 		LogFile.info("Running setup: \(table())", logFile: "./StORMlog.txt")
 		var createStatement = str
 		if str.count == 0 {
