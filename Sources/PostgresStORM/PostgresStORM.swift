@@ -10,6 +10,7 @@ import StORM
 import PerfectPostgreSQL
 import PerfectLogger
 import Foundation
+import PerfectLib
 
 /// PostgresConnector sets the connection parameters for the PostgreSQL Server access
 /// Usage:
@@ -305,20 +306,26 @@ open class PostgresStORM: StORM, StORMProtocol {
     }
 
     let t = type(of: v).self
-    let type = determineType(t)
+    let type1 = determineType(t)
 
-    switch type {
+    switch type1 {
     case "jsonb":
       let param: String?
       if t == [String:Any].self || t == [String:Any]?.self {
         param = try? (v as? [String:Any] ?? [:]).jsonEncodedString()
       } else {
-        param = (v as? Encodable).map { (try? $0.string()) ?? "{}" }
+        param = (v as? Encodable).flatMap { try? $0.string() }
       }
 
       i += 1
 
-      return (param.map { [$0] } ?? [ "{}" ], "$\(i)::jsonb")
+      guard let param1 = param, let decoded = try? param1.jsonDecode() else {
+        return ([ "{}" ], "$\(i)::jsonb")
+      }
+
+      let type2 = determineType(type(of: decoded).self)
+
+      return ([param1], "$\(i)::\(type2)")
     case "jsonb[]":
       var params: [String] = []
       var substs: [String] = []
@@ -348,7 +355,7 @@ open class PostgresStORM: StORM, StORMProtocol {
 
       return (params, "ARRAY[\(substs.joined(separator: ","))]::jsonb[]")
     case "text[]", "int[]", "bytea[]", "float8[]":
-      let subType = type[type.startIndex..<type.index(type.endIndex, offsetBy: -2)]
+      let subType = type1[type1.startIndex..<type1.index(type1.endIndex, offsetBy: -2)]
       var params: [String] = []
       var substs: [String] = []
 
@@ -362,7 +369,7 @@ open class PostgresStORM: StORM, StORMProtocol {
         return (params, substs.first!)
       }
 
-      return (params, "ARRAY[\(substs.joined(separator: ","))]::\(type)")
+      return (params, "ARRAY[\(substs.joined(separator: ","))]::\(type1)")
 
     default:
       i += 1
@@ -370,12 +377,12 @@ open class PostgresStORM: StORM, StORMProtocol {
       if let ds = Mirror(reflecting: v).displayStyle {
         if case .optional = ds {
           if let v = Mirror(reflecting: v).children.first {
-            return ([String(describing: v)], "$\(i)::\(type)")
+            return ([String(describing: v)], "$\(i)::\(type1)")
           }
         }
       }
 
-      return ([String(describing: v)], "$\(i)::\(type)")
+      return ([String(describing: v)], "$\(i)::\(type1)")
     }
   }
 
