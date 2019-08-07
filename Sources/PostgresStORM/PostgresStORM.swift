@@ -310,22 +310,22 @@ open class PostgresStORM: StORM, StORMProtocol {
 
     switch type1 {
     case "jsonb":
-      let param: String?
+      let param: String
       if t == [String:Any].self || t == [String:Any]?.self {
-        param = try? (v as? [String:Any] ?? [:]).jsonEncodedString()
+        param = (try? (v as? [String:Any] ?? [:]).jsonEncodedString()) ?? "{}"
+      } else if let v = v as? Encodable {
+        if let v = try? v.string() {
+          param = v
+        } else {
+          i += 1
+          return (["\(v)"], "$\(i)::text")
+        }
       } else {
-        param = (v as? Encodable).flatMap { try? $0.string() }
+        param = "{}"
       }
 
       i += 1
-
-      guard let param1 = param, let decoded = try? param1.jsonDecode() else {
-        return ([ "{}" ], "$\(i)::jsonb")
-      }
-
-      let type2 = determineType(type(of: decoded).self)
-
-      return ([param1], "$\(i)::\(type2)")
+      return ([param], "$\(i)::jsonb")
     case "jsonb[]":
       var params: [String] = []
       var substs: [String] = []
