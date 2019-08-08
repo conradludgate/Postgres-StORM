@@ -39,7 +39,15 @@ extension Optional : CodableOptional where Wrapped: Codable {}
 protocol CodableArrayOptional {}
 extension Optional : CodableArrayOptional where Wrapped: CodableArray {}
 
-
+protocol PostgresStringRepresentable {
+  var rawValue: String { get }
+}
+protocol PostgresStringRepresentableArray {}
+protocol PostgresStringRepresentableOptional {}
+protocol PostgresStringRepresentableArrayOptional {}
+extension Array : PostgresStringRepresentableArray where Element: PostgresStringRepresentable {}
+extension Optional : PostgresStringRepresentableOptional where Wrapped: PostgresStringRepresentable {}
+extension Optional : PostgresStringRepresentableArrayOptional where Wrapped: PostgresStringRepresentableArray {}
 
 /// SuperClass that inherits from the foundation "StORM" class.
 /// Provides PosgreSQL-specific ORM functionality to child classes
@@ -263,7 +271,8 @@ open class PostgresStORM: StORM, StORMProtocol {
       return "int"
     } else if t == Bool.self || t == Bool?.self {
       return "bool"
-    } else if t == [String].self || t == [String]?.self {
+    } else if t == [String].self || t == [String]?.self ||
+      t is PostgresStringRepresentableArray.Type || t is PostgresStringRepresentableArrayOptional.Type {
       return "text[]";
     } else if t == [[String:Any]].self || t == [[String:Any]]?.self {
       return "jsonb[]"
@@ -278,7 +287,9 @@ open class PostgresStORM: StORM, StORMProtocol {
       return "bytea"
     } else if t == [String:Any].self || t == [String:Any]?.self {
       return "jsonb"
-    } else if t == String.self || t == String?.self {
+    } else if t == String.self || t == String?.self ||
+      t is PostgresStringRepresentable .Type ||
+      t is PostgresStringRepresentableOptional.Type {
       return "text"
     } else if t is CodableArray.Type || t is CodableArrayOptional.Type {
       return "jsonb[]"
@@ -310,22 +321,16 @@ open class PostgresStORM: StORM, StORMProtocol {
 
     switch type1 {
     case "jsonb":
-      let param: String
+      let param: String?
       if t == [String:Any].self || t == [String:Any]?.self {
-        param = (try? (v as? [String:Any] ?? [:]).jsonEncodedString()) ?? "{}"
-      } else if let v = v as? Encodable {
-        if let v = try? v.string() {
-          param = v
-        } else {
-          i += 1
-          return (["\(v)"], "$\(i)::text")
-        }
+        param = try? (v as? [String:Any] ?? [:]).jsonEncodedString()
       } else {
-        param = "{}"
+        param = (v as? Encodable).flatMap { try? $0.string() }
       }
 
       i += 1
-      return ([param], "$\(i)::jsonb")
+
+      return (param.map { [$0] } ?? [ "{}" ], "$\(i)::jsonb")
     case "jsonb[]":
       var params: [String] = []
       var substs: [String] = []
@@ -359,10 +364,18 @@ open class PostgresStORM: StORM, StORMProtocol {
       var params: [String] = []
       var substs: [String] = []
 
-      (v as! [Any]).forEach {
-        params.append(String(describing: $0))
-        i += 1
-        substs.append("$\(i)::\(subType)")
+      if let v = v as? [PostgresStringRepresentable] {
+        v.forEach{
+          params.append($0.rawValue)
+          i += 1
+          substs.append("$\(i)::\(subType)")
+        }
+      } else {
+        (v as! [Any]).forEach {
+          params.append(String(describing: $0))
+          i += 1
+          substs.append("$\(i)::\(subType)")
+        }
       }
 
       if !insert && params.count == 1 {
@@ -382,7 +395,11 @@ open class PostgresStORM: StORM, StORMProtocol {
         }
       }
 
-      return ([String(describing: v)], "$\(i)::\(type1)")
+      if let v = v as? PostgresStringRepresentable {
+        return ([v.rawValue], "$\(i)::\(type1)")
+      } else {
+        return ([String(describing: v)], "$\(i)::\(type1)")
+      }
     }
   }
 
