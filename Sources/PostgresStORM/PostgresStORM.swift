@@ -39,7 +39,7 @@ extension Optional : CodableOptional where Wrapped: Codable {}
 protocol CodableArrayOptional {}
 extension Optional : CodableArrayOptional where Wrapped: CodableArray {}
 
-protocol PostgresStringRepresentable {
+public protocol PostgresStringRepresentable {
   var rawValue: String { get }
 }
 protocol PostgresStringRepresentableArray {}
