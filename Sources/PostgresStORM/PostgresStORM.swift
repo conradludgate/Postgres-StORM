@@ -354,10 +354,6 @@ open class PostgresStORM: StORM, StORMProtocol {
         }
       }
 
-      if !insert && params.count == 1 {
-        return (params, substs.first!)
-      }
-
       return (params, "ARRAY[\(substs.joined(separator: ","))]::jsonb[]")
     case "text[]", "int[]", "bytea[]", "float8[]":
       let subType = type1[type1.startIndex..<type1.index(type1.endIndex, offsetBy: -2)]
@@ -376,10 +372,6 @@ open class PostgresStORM: StORM, StORMProtocol {
           i += 1
           substs.append("$\(i)::\(subType)")
         }
-      }
-
-      if !insert && params.count == 1 {
-        return (params, substs.first!)
       }
 
       return (params, "ARRAY[\(substs.joined(separator: ","))]::\(type1)")
