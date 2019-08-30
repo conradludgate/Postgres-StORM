@@ -13,20 +13,21 @@ public struct ConnectionPool {
 
   private static func getConnection(maxTimeout: Double, forcePrint: Bool?) -> PostgresConnect? {
 
-    idleLock.lock()
-    active += 1
+    if let conn = idleLock.doWithLock(closure: { () -> PostgresConnect? in
+      active += 1
 
-    // Get the first ok connection
-    while let conn = idle.popLast() {
-      if conn.state == .good {
-        idleLock.unlock()
-        return conn
+      // Get the first ok connection
+      while let conn = idle.popLast() {
+        if conn.state == .good {
+          return conn
+        }
+
+        conn.server.close()
       }
-
-      conn.server.close()
+      return nil
+    }) {
+      return conn
     }
-
-    idleLock.unlock()
 
     // No connections available or all the idle connections were bad
     let conn = PostgresConnect(
@@ -62,21 +63,19 @@ public struct ConnectionPool {
 
   private static func returnConnection(_ conn: PostgresConnect) {
     Threading.dispatch {
-      idleLock.lock()
-      defer { idleLock.unlock() }
+      idleLock.doWithLock {
+        idle.append(conn)
 
-      idle.append(conn)
+        if idle.count > idleConnections {
+          for i in 0..<(idle.count - idleConnections) {
+            idle[i].server.close()
+          }
+          // Remove first since they'll be the oldest connections
+          idle.removeFirst(idle.count - idleConnections)
+        }
 
-      for i in 0..<max(0, idle.count - idleConnections) {
-        idle[i].server.close()
+        active -= 1
       }
-
-      if idle.count > idleConnections {
-        // Remove first since they'll be the oldest connections
-        idle.removeFirst(idle.count - idleConnections)
-      }
-
-      active -= 1
     }
   }
 
