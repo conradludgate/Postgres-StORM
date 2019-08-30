@@ -107,33 +107,21 @@ open class PostgresStORM: StORM, StORMProtocol {
 	// Returns raw result
 	@discardableResult
 	func exec(_ statement: String, params: [String], forcePrint: Bool?) throws -> PGResult {
-		let thisConnection = PostgresConnect(
-			host:		PostgresConnector.host,
-			username:	PostgresConnector.username,
-			password:	PostgresConnector.password,
-			database:	PostgresConnector.database,
-			port:		PostgresConnector.port
-		)
+		return try ConnectionPool.dispatch(forcePrint: forcePrint, closure: { conn in
+      conn.statement = statement
 
-		thisConnection.open(forcePrint: forcePrint)
-		if thisConnection.state == .bad {
-			error = .connectionError
-			throw StORMError.error("Connection Error")
-		}
-		thisConnection.statement = statement
+      PostgresStORM.printDebug(statement, "Execute", forcePrint: forcePrint)
+      let result = conn.server.exec(statement: statement, params: params)
 
-    PostgresStORM.printDebug(statement, "Execute", forcePrint: forcePrint)
-		let result = thisConnection.server.exec(statement: statement, params: params)
+      // set exec message
+      self.errorMsg = conn.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
+      if self.isError() {
+        PostgresStORM.printInfo(self.errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
+        throw StORMError.error(self.errorMsg)
+      }
 
-		// set exec message
-		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
-		if isError() {
-      PostgresStORM.printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
-			thisConnection.server.close()
-			throw StORMError.error(errorMsg)
-		}
-		thisConnection.server.close()
-		return result
+      return result
+    }).waitResult().flatten().unwrap()
 	}
 
   override open func modifyValue(_ v: Any, forKey k: String) -> Any {
@@ -144,38 +132,23 @@ open class PostgresStORM: StORM, StORMProtocol {
 	// Returns a processed row set
 	@discardableResult
 	func execRows(_ statement: String, params: [String], forcePrint: Bool?) throws -> [StORMRow] {
-		let thisConnection = PostgresConnect(
-			host:		PostgresConnector.host,
-			username:	PostgresConnector.username,
-			password:	PostgresConnector.password,
-			database:	PostgresConnector.database,
-			port:		PostgresConnector.port
-		)
+    return try ConnectionPool.dispatch(forcePrint: forcePrint, closure: { conn in
+      conn.statement = statement
 
-		thisConnection.open(forcePrint: forcePrint)
-		if thisConnection.state == .bad {
-			error = .connectionError
-			throw StORMError.error("Connection Error")
-		}
-		thisConnection.statement = statement
+      PostgresStORM.printDebug(statement, "Request Rows", params, forcePrint: forcePrint)
+      let result = conn.server.exec(statement: statement, params: params)
 
-    PostgresStORM.printDebug(statement, "Request Rows", params, forcePrint: forcePrint)
-		let result = thisConnection.server.exec(statement: statement, params: params)
+      // set exec message
+      self.errorMsg = conn.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
+      if self.isError() {
+        PostgresStORM.printInfo(self.errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
+        throw StORMError.error(self.errorMsg)
+      }
 
-		// set exec message
-		errorMsg = thisConnection.server.errorMessage().trimmingCharacters(in: .whitespacesAndNewlines)
-		if isError() {
-      PostgresStORM.printInfo(errorMsg, "Error msg", logFile: "./StORMlog.txt", forcePrint: forcePrint)
-			thisConnection.server.close()
-			throw StORMError.error(errorMsg)
-		}
-
-		let resultRows = parseRows(result)
-
-    PostgresStORM.printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response", forcePrint: forcePrint)
-		//		result.clear()
-		thisConnection.server.close()
-		return resultRows
+      let resultRows = self.parseRows(result)
+      PostgresStORM.printDebug(resultRows.map{ "\($0.data)" }.joined(separator: ","), "Response", forcePrint: forcePrint)
+      return resultRows
+    }).waitResult().flatten().unwrap()
 	}
 
 
