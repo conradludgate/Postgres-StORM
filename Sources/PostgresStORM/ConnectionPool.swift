@@ -67,7 +67,7 @@ public struct ConnectionPool {
 
       idle.append(conn)
 
-      for i in 0..<(idle.count - idleConnections) {
+      for i in 0..<max(0, idle.count - idleConnections) {
         idle[i].server.close()
       }
 
