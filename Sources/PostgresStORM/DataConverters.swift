@@ -14,16 +14,42 @@ extension PostgresStORM {
 		return str.trimmingCharacters(in: .whitespacesAndNewlines)
 	}
 
-	public func toArrayString(_ input: Any) -> [String] {
-    var text = (input as? String ?? "{}")
+  // Basic string parser
+  public func toArrayString(_ text: String) -> [String] {
+    // Early termination. Not necessary but avoids wasted calculations
     if text.count < 2 {
       return []
     }
 
-    text.removeFirst()
-    text.removeLast()
-		return text.split(separator: ",").map{ trim(String($0)) }
-	}
+    var sections: [String] = []
+    var builder: String = ""
+
+    var iterIndex = text.index(after: text.startIndex)
+
+    var control = false
+    var open = false
+
+    while iterIndex < text.endIndex {
+      let char = text[iterIndex]
+      if !control && char == "\"" {
+        open = !open
+      } else if open && !control && char == "\\" {
+        control = true
+      } else if !open && (char == "," || char == "}") {
+        sections.append(builder)
+        builder = ""
+      } else if control && open {
+        builder.append(char)
+        control = false
+      } else if open {
+        builder.append(char)
+      }
+
+      iterIndex = text.index(after: iterIndex)
+    }
+
+    return sections
+  }
 	public func toArrayInt(_ input: Any) -> [Int] {
     var text = (input as? String ?? "{}")
     if text.count < 2 {
