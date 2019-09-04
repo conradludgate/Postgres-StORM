@@ -41,7 +41,7 @@ extension PostgresStORM {
       } else if control && open {
         builder.append(char)
         control = false
-      } else if open {
+      } else if open || char != " " {
         builder.append(char)
       }
 
