@@ -24,7 +24,7 @@ extension PostgresStORM {
     var i = 0
     params.enumerated().forEach { (index, param) in
       let (params, subst) = PostgresStORM.convertInto(param, &i)
-      if params.count > 0 {
+      if !params.isEmpty || !subst.isEmpty {
         paramString += params
         substString.append("\"\(cols[index])\" = \(subst)")
       }
